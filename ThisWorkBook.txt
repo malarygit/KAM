@@ -1,0 +1,142 @@
+Private Sub Workbook_Open()
+
+ 
+    Dim wb As Workbook, connectedUserSuivi As String, connectedUser As String
+    Set wb = ThisWorkbook
+    'Call FW_VBA.BlockMultipleFilesOpen
+    
+    connectedUser = FW_VBA.OverridenConnectedUser(Application.userName)
+    connectedUserSuivi = connectedUser & "_Suivi"
+    
+       'Masquer le message d'information pour se connecter depuis l'application
+   'Call FW_VBA.UpdateSpecificButtonVisibility("InfoAideOuverture", "Aide", False)
+    
+    
+    'Call TimerModule.InitializeCustomPropertyForTimerModule
+    'Call TimerModule.InitialiserSuiviInactivite
+    
+
+    
+     'Stocker le nom d'utilisateur window si vide (ie première connection). Permettra de garantir l'identité de la personne
+    Call AdminModule.SaveUserMicrosoftAtFirstConnection(connectedUser)
+    
+    'Au démarrage on affiche l'onglet Referentiel qui est autorisé pour tout le monde avec le bouton Suggerer des compétences à True
+    Call FW_VBA.UpdateSpecificButtonVisibility("Suggerer", "Referentiel", True)
+    'Au démarrage on affiche l'onglet KAM  avec le bouton d'accueil de collaborateur
+    Call FW_VBA.UpdateSpecificButtonVisibility("Accueil", "KAM", True)
+    ' Désactiver les mises à jour IHM
+    Application.ScreenUpdating = False
+    
+    'On initialise l'onglet "{{connectedUser}}_Suivi" uniquement si cet onglet n'est pas déjà présent et si le connectedUser est connu et nécessite un suivi
+    If FW_VBA.AjouterMotDePasse = True Then
+        If FW_VBA.IsSheetFound(connectedUserSuivi) = False Then
+            If AdminModule.NeedSuivitab(connectedUser) Then
+                Call AdminModule.InitSuivi(connectedUser)
+                Sheets(connectedUserSuivi).Activate
+            Else
+                
+                MsgBox FW_VBA.RetrieveMessageToDisplay("vba_code_message", "connectedUserUnknownMessage"), Title:="Information"
+                Call FW_VBA.UpdateSpecificButtonVisibility("Suggerer", "Referentiel", False)
+                Call FW_VBA.UpdateSpecificButtonVisibility("Accueil", "KAM", False)
+            End If
+        Else
+            Worksheets(connectedUserSuivi).Visible = xlSheetVisible
+        End If
+    Else
+        MsgBox "Le fichier ne peut pas être modifié. Il est certainement ouvert par un autre utilisateur en parallèle."
+    End If
+    
+    'Afficher les onglets en fonction des droits de l'utilisateur connecté
+    Call AdminModule.UpdateUserConnectedRights(connectedUser, "defaultMode")
+    
+    'Afficher les derniers messages d'info (depuis la date de dernière connexion)
+    Call AdminModule.InfoPopIn(connectedUser)
+    
+
+    
+    'Rafraichir la liste des compétences actives dans la KAM
+    Call AdminModule.MettreAJourListeCompetencesKAM
+    
+    ' Réactiver mes mises à jour IHM
+    Application.ScreenUpdating = True
+
+    Sheets("Aide").Activate
+    'ActiveWorkbook.Save
+
+End Sub
+
+
+Private Sub Workbook_BeforeClose(Cancel As Boolean)
+    Dim saveKAM     As Integer, connectedUserSuivi As String, connectedUserFormulaire As String, connectedUserAccueil As String, connectedUser As String
+    connectedUser = FW_VBA.OverridenConnectedUser(Application.userName)
+    connectedUserSuivi = connectedUser & "_Suivi"
+    connectedUserFormulaire = connectedUser & "_Form"
+    connectedUserAccueil = connectedUser & "_Accueil"
+    
+    'Desactiver les alertes pour éviter de voir apparaitre un pop in native inutile
+    Application.DisplayAlerts = False
+    'Supprimer l'onglet "{{connectedUser}}_Suivi"
+    If FW_VBA.IsSheetFound(connectedUserSuivi) Then
+        Sheets(connectedUserSuivi).Delete
+    End If
+    'Supprimer l'onglet "{{connectedUser}}_Accueil"
+    If FW_VBA.IsSheetFound(connectedUserAccueil) Then
+        Sheets(connectedUserAccueil).Delete
+    End If
+    
+    
+    'Supprimer l'onglet "{{connectedUser}}_Form"
+    If FW_VBA.IsSheetFound(connectedUserFormulaire) Then
+        Sheets(connectedUserFormulaire).Activate
+        If Range("skip_maj_Suivi") = False Then
+            saveKAM = MsgBox(FW_VBA.RetrieveMessageToDisplay("vba_code_message", "closeFileWithFormulaireOpenMessage"), vbQuestion + vbYesNo + vbDefaultButton1, FW_VBA.RetrieveMessageToDisplay("vba_code_message", "closeFileWithFormulaireOpenTitle"))
+            ' Sauvegarder la saisie si l'utilisateur à cliquer sur Oui
+            If saveKAM = vbYes Then
+                Call AdminModule.CopyToHistorySuivi(connectedUser)
+                Call AdminModule.CopyToHistoryKAM(connectedUser)
+            End If
+        End If
+        FW_VBA.DeleteSheet (connectedUserFormulaire)
+    End If
+    
+    'Masquer tous les onglets. Cela force à ouvrir le ficheir dnas l'application pour activer le code vba
+    
+    ' #########"" Test co edition : ne pas modifier les RG de visibilités
+    'Call FW_VBA.UpdateSheetVisibilityExceptParam("Aide", False)
+    
+   
+    '#########"" Afficher le message d'information pour se connecter depuis l'application
+   'Call FW_VBA.UpdateSpecificButtonVisibility("InfoAideOuverture", "Aide", True)
+    'Call AdminModule.UpdateUserConnectedRights(connectedUser, "defaultMode")
+   
+    'Réactiver les alertes
+    Application.DisplayAlerts = True
+    'Afficher les onglets en fonction des droits de l'utilisateur connecté  KEEP ????????????????
+ 
+    
+    Call FW_VBA.SupprimerMotDePasse
+    
+    'Enregistrer le fichier avant de le fermer
+    ActiveWorkbook.Save
+    
+End Sub
+
+'#############
+'####### Mode co édition activé - plus besoin de fermer automatiquement le fichier au bout d'un certain temps d'inactivité
+'#############
+'Private Sub Workbook_SheetChange(ByVal Sh As Object, ByVal Target As Range)
+    ' Actualiser l'heure de dernière activité dès qu'un changement se produit dans n'importe quelle feuille
+   ' Call TimerModule.ActualiserHeureDerniereActivite
+'End Sub
+
+'Private Sub Workbook_SheetCalculate(ByVal Sh As Object)
+    ' Actualiser l'heure de dernière activité dès qu'une feuille est recalculée
+    'Call TimerModule.ActualiserHeureDerniereActivite
+'End Sub
+
+
+'Private Sub Workbook_SheetSelectionChange(ByVal Sh As Object, ByVal Target As Range)
+    ' Actualiser l'heure de dernière activité dès qu'une nouvelle sélection est effectuée
+    'Call TimerModule.ActualiserHeureDerniereActivite
+'End Sub
+
