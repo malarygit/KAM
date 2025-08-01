@@ -1,0 +1,255 @@
+Sub SuivreMonEvolution()
+    Dim connectedUser As String, connectedUserSuivi As String, isSupervisorOnly As Boolean
+    connectedUser = FW_VBA.OverridenConnectedUser(Application.userName)
+    connectedUserSuivi = connectedUser & "_Suivi"
+    onlySupervisorList = Range("user_sans_formulaire")
+    isSupervisorOnly = FW_VBA.IsInArray(connectedUser, onlySupervisorList)
+    
+    Call AdminModule.InitSuiviIfMissing(connectedUser, connectedUserSuivi)
+    
+    If isSupervisorOnly = False Then
+        Call LienVersSuivi(connectedUserSuivi)
+        Range("nom_suivi").Value = connectedUser
+    Else
+        MsgBox FW_VBA.RetrieveMessageToDisplay("vba_code_message", "informationHelpNavigationSupervisorOnly"), Title:="Information"
+    End If
+    
+End Sub
+
+Sub LienVersSuivi(connectedUserSuivi As String)
+    Call ClignoterOnglet(connectedUserSuivi)
+    Application.ScreenUpdating = False
+    Sheets(connectedUserSuivi).Activate
+    Application.ScreenUpdating = True
+End Sub
+
+Sub FocusBoutonEvaluer()
+    Dim connectedUser As String, connectedUserSuivi As String, isSupervisorOnly As Boolean
+    connectedUser = FW_VBA.OverridenConnectedUser(Application.userName)
+    connectedUserSuivi = connectedUser & "_Suivi"
+    onlySupervisorList = Range("user_sans_formulaire")
+    isSupervisorOnly = FW_VBA.IsInArray(connectedUser, onlySupervisorList)
+    
+    Call AdminModule.InitSuiviIfMissing(connectedUser, connectedUserSuivi)
+    
+    If isSupervisorOnly = False Then
+        Call LienVersSuivi(connectedUserSuivi)
+        Range("nom_suivi").Value = connectedUser
+        Call FaireClignoterForme("FlecheEvaluer")
+    Else
+        MsgBox FW_VBA.RetrieveMessageToDisplay("vba_code_message", "informationHelpNavigationSupervisorOnly"), Title:="Information"
+    End If
+End Sub
+
+Sub FocusBoutonAjouter()
+    Dim connectedUser As String, connectedUserSuivi As String, isSupervisorOnly As Boolean
+    connectedUser = FW_VBA.OverridenConnectedUser(Application.userName)
+    connectedUserSuivi = connectedUser & "_Suivi"
+    onlySupervisorList = Range("user_sans_formulaire")
+    isSupervisorOnly = FW_VBA.IsInArray(connectedUser, onlySupervisorList)
+    
+    Call AdminModule.InitSuiviIfMissing(connectedUser, connectedUserSuivi)
+    
+    If isSupervisorOnly = False Then
+        Call LienVersSuivi(connectedUserSuivi)
+        Range("nom_suivi").Value = connectedUser
+        Call FaireClignoterForme("FlecheAjouter")
+    Else
+        MsgBox FW_VBA.RetrieveMessageToDisplay("vba_code_message", "informationHelpNavigationSupervisorOnly"), Title:="Information"
+    End If
+    
+End Sub
+
+Sub LienVersReferentiel()
+    Call ClignoterOnglet("Referentiel")
+    Application.ScreenUpdating = False
+    Sheets("Referentiel").Activate
+    Application.ScreenUpdating = True
+End Sub
+
+Sub FocusBoutonSuggerer()
+    Call LienVersReferentiel
+    Call FaireClignoterForme("FlecheSuggerer")
+End Sub
+
+Sub FocusBoutonAccueillir()
+    Call LienVersKAM
+    Call FaireClignoterForme("FlecheAccueillir")
+End Sub
+
+Sub LienVersKAM()
+    Call ClignoterOnglet("KAM")
+    Application.ScreenUpdating = False
+    Sheets("KAM").Activate
+    Application.ScreenUpdating = True
+End Sub
+
+Sub FocusSuiviMOP()
+    
+    Dim connectedUser As String, connectedUserSuivi As String, isSupervisorOnly As Boolean
+    connectedUser = FW_VBA.OverridenConnectedUser(Application.userName)
+    connectedUserSuivi = connectedUser & "_Suivi"
+    onlySupervisorList = Range("user_sans_formulaire")
+    isSupervisorOnly = FW_VBA.IsInArray(connectedUser, onlySupervisorList)
+    
+    Call AdminModule.InitSuiviIfMissing(connectedUser, connectedUserSuivi)
+    
+    Call LienVersSuivi(connectedUserSuivi)
+    Dim cell        As Range
+    
+    Set cell = Range("nom_suivi")        ' Remplacez "A1" par la référence de votre cellule avec la liste déroulante
+    
+    If isSupervisorOnly = False Then
+        Range("nom_suivi").Value = connectedUser
+    End If
+    
+    Call FaireClignoterForme("FlecheMOP")
+    
+    ' Placer le focus sur la cellule
+    cell.Select
+    
+    ' Simuler l'action de "Alt + Flèche bas" pour ouvrir la liste déroulante
+    Application.SendKeys "%{DOWN}"
+    
+End Sub
+
+Sub SelectFirstMop()
+    
+    Dim connectedUser As String, connectedUserSuivi As String, isSupervisorOnly As Boolean
+    connectedUser = FW_VBA.OverridenConnectedUser(Application.userName)
+    connectedUserSuivi = connectedUser & "_Suivi"
+    onlySupervisorList = Range("user_sans_formulaire")
+    isSupervisorOnly = FW_VBA.IsInArray(connectedUser, onlySupervisorList)
+    ' Remplacez "A1" par la référence de votre cellule avec la liste déroulante
+    
+    'Call LienVersSuivi(connectedUserSuivi)
+    Set cell = Range("nom_suivi")
+    Call FaireClignoterForme("FlecheMOP")
+    
+    ' Placer le focus sur la cellule
+    cell.Select
+    
+    ' Simuler l'action de "Alt + Flèche bas" pour ouvrir la liste déroulante
+    Application.SendKeys "%{DOWN}"
+    ' Attendre un petit moment pour que la liste se déplie correctement
+    Application.Wait (Now + 0.0000005)        ' Attendre 500ms
+    
+    ' Simuler la touche "Flèche bas" pour sélectionner l'élément suivant dans la liste
+    Application.SendKeys "{DOWN}"
+    
+    ' Attendre un petit moment pour que la liste se déplie correctement
+    Application.Wait (Now + 0.0000005)        ' Attendre 500ms
+    
+    ' Simuler la touche "Entrée" pour valider la sélection
+    Application.SendKeys "~"
+    
+End Sub
+
+Sub FocusMOPBoutonAjouter()
+    Dim connectedUser As String, connectedUserSuivi As String, isSupervisorOnly As Boolean
+    connectedUser = FW_VBA.OverridenConnectedUser(Application.userName)
+    connectedUserSuivi = connectedUser & "_Suivi"
+    onlySupervisorList = Range("user_sans_formulaire")
+    isSupervisorOnly = FW_VBA.IsInArray(connectedUser, onlySupervisorList)
+    
+    Call AdminModule.InitSuiviIfMissing(connectedUser, connectedUserSuivi)
+    
+    If isSupervisorOnly = False Then
+        Call LienVersSuivi(connectedUserSuivi)
+        Range("nom_suivi").Value = connectedUser
+        Call SelectFirstMop
+        ' Attendre un petit moment pour que la liste se déplie correctement
+        Application.Wait (Now + 0.000005)        ' Attendre 500ms
+        Application.Wait (Now + 0.000005)        ' Attendre 500ms
+    Else
+        Call FocusSuiviMOP
+        Application.SendKeys "~"
+        
+    End If
+    Call FaireClignoterForme("FlecheAjouter")
+    Call FaireClignoterForme("FlecheAjouter")
+End Sub
+
+Sub FocusMOPBoutonPrioriser()
+    Dim connectedUser As String, connectedUserSuivi As String, isSupervisorOnly As Boolean
+    connectedUser = FW_VBA.OverridenConnectedUser(Application.userName)
+    connectedUserSuivi = connectedUser & "_Suivi"
+    onlySupervisorList = Range("user_sans_formulaire")
+    isSupervisorOnly = FW_VBA.IsInArray(connectedUser, onlySupervisorList)
+    
+    Call AdminModule.InitSuiviIfMissing(connectedUser, connectedUserSuivi)
+    
+    If isSupervisorOnly = False Then
+        Call LienVersSuivi(connectedUserSuivi)
+        Range("nom_suivi").Value = connectedUser
+        Call SelectFirstMop
+        ' Attendre un petit moment pour que la liste se déplie correctement
+        Application.Wait (Now + 0.000005)        ' Attendre 500ms
+        Application.Wait (Now + 0.000005)        ' Attendre 500ms
+    Else
+        Call FocusSuiviMOP
+        Application.SendKeys "~"
+        
+    End If
+    Call FaireClignoterForme("FlechePrioriser")
+    Call FaireClignoterForme("FlechePrioriser")
+End Sub
+
+Sub FaireClignoterForme(nomForme As String)
+    Dim forme       As Shape
+    Set forme = ActiveSheet.Shapes(nomForme)        ' Remplacez "Flèche1" par le nom de votre forme
+    
+    ' Initialisation
+    Dim startTime   As Double
+    startTime = Timer        ' Temps de départ de l'animation
+    Dim elapsedTime As Double
+    
+    ' Effectuer l'animation pendant 3 secondes
+    Do While (Timer - startTime < 1.4)
+        ' Calculer le temps écoulé
+        elapsedTime = Timer - startTime
+        
+        ' Faire clignoter la forme (alterner visibilité)
+        If Int(elapsedTime * 5) Mod 2 = 0 Then
+            forme.Visible = msoFalse        ' Cacher la forme
+        Else
+            forme.Visible = msoTrue        ' Afficher la forme
+        End If
+        
+        ' Changer la taille de la forme (augmenter puis réduire)
+        ' forme.Width = 50 + 20 * Sin(elapsedTime * 2 * 3.14159) ' Taille oscillante
+        'forme.Height = 50 + 20 * Sin(elapsedTime * 2 * 3.14159) ' Taille oscillante
+        
+        DoEvents        ' Permet à Excel de redessiner et de traiter les événements
+        
+        ' Attendre un petit moment (pour voir l'animation)
+        Application.Wait (Now + 0.0000005)        ' Attendre 50 ms
+    Loop
+End Sub
+
+
+
+
+
+
+Sub ClignoterOnglet(nomFeuille As String)
+    Dim couleurOriginale As Long, i As Integer, animationSatus As Boolean
+    ' Sauvegarder la couleur d'origine de l'onglet
+    couleurOriginale = ThisWorkbook.Sheets(nomFeuille).Tab.Color
+
+    animationSatus = Application.ScreenUpdating
+    Application.ScreenUpdating = True
+    For i = 1 To 2 ' Le clignotement se fait 10 fois
+        ' Changer la couleur de l'onglet en jaune
+        ThisWorkbook.Sheets(nomFeuille).Tab.Color = RGB(255, 255, 0)
+        ' Attendre 0.5 seconde
+        Application.Wait (Now + 0.000008)
+        ' Revenir à la couleur d'origine
+        ThisWorkbook.Sheets(nomFeuille).Tab.Color = couleurOriginale
+        ' Attendre encore 0.5 seconde
+        Application.Wait (Now + 0.000006)
+    Next i
+        Application.ScreenUpdating = animationSatus
+End Sub
+
+

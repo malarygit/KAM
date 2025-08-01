@@ -1,0 +1,241 @@
+Sub Bouton_MailRelance()
+    Dim lemail_relance As Variant, lemail_onboarding As Variant, tab_droit() As Variant, objectMailRelance As String, bodyMailRelance As String, objectMailOnboarding As String, bodyMailOnboarding As String, urlKAM As String, i As Integer
+    Set lemail_relance = CreateObject("outlook.application")        'creation obejt outlook
+    Set lemail_onboarding = CreateObject("outlook.application")        'creation obejt outlook
+    objectMailRelance = Range("mail_objet_relance")
+    bodyMailRelance = Range("mail_body_relance")
+    objectMailOnboarding = Range("mail_objet_onboarding")
+    bodyMailOnboarding = Range("mail_body_onboarding")
+    urlKAM = Range("mail_lien_KAM")
+    tab_droit = Range("Declaration_generale_utilisateur")
+    
+    bodyMailRelance = Replace(bodyMailRelance, "{{lienKAM}}", urlKAM)
+    bodyMailOnboarding = Replace(bodyMailOnboarding, "{{lienKAM}}", urlKAM)
+    
+    For i = 1 To UBound(tab_droit)
+        If tab_droit(i, 7) = "oui" Then
+            If tab_droit(i, 5) = "non" Then
+                
+                With lemail_relance.CreateItem(olmailitem)
+                    .Subject = objectMailRelance
+                    .To = tab_droit(i, 3)
+                    .Body = Replace(bodyMailRelance, "{{date}}", tab_droit(i, 6))
+                    ' info vbCrLf ==retour à la ligne
+                    .display        'affiche le message mais ne l envoie pas
+                    '.send
+                End With
+            Else
+                
+                With lemail_onboarding.CreateItem(olmailitem)
+                    .Subject = objectMailOnboarding
+                    .To = tab_droit(i, 3)
+                    .Body = Replace(bodyMailOnboarding, "{{date}}", tab_droit(i, 6))
+                    ' info vbCrLf ==retour à la ligne
+                    .display        'affiche le message mais ne l envoie pas
+                    '.send
+                End With
+            End If
+        End If
+    Next
+End Sub
+
+Sub Bouton_MailInformationAll()
+    Dim lemailInformationAll      As Variant, tab_droit() As Variant, objectMailInformationAll As String, bodyMailInformationAll As String, urlKAM As String, i As Integer, stringListeMessageKAM As String, dateDernierMail As Date
+    Set lemailInformationAll = CreateObject("outlook.application")        'creation obejt outlook
+    objectMailInformationAll = Range("mail_objet_information")
+    bodyMailInformationAll = Range("mail_body_information")
+    urlKAM = Range("mail_lien_KAM")
+    tab_droit = Range("Declaration_generale_utilisateur")
+    tab_ListeMessage = Range("Tab_ListeMessageKAM")
+    dateDernierMail = Range("mail_date_dernier_information")
+    
+    bodyMailInformationAll = Replace(bodyMailInformationAll, "{{lienKAM}}", urlKAM)
+    
+    For i = 1 To UBound(tab_ListeMessage)
+        If tab_ListeMessage(i, 2) = "" Or tab_ListeMessage(i, 2) >= dateDernierMail Then
+            stringListeMessageKAM = stringListeMessageKAM & tab_ListeMessage(i, 1) & Chr(13) & Chr(10)
+        End If
+    Next
+    
+    bodyMailInformationAll = Replace(bodyMailInformationAll, "{{listeMessageKAM}}", stringListeMessageKAM)
+    
+    For i = 1 To UBound(tab_droit)
+        With lemailInformationAll.CreateItem(olmailitem)
+            .Subject = objectMailInformationAll
+            .To = tab_droit(i, 3)
+            .Body = Replace(bodyMailInformationAll, "{{date}}", tab_droit(i, 6))
+            ' info vbCrLf ==retour à la ligne
+            .display        'affiche le message mais ne l envoie pas
+            '.send
+        End With
+        
+    Next
+    Range("mail_date_dernier_information").Value = Date
+End Sub
+
+Sub EnvoyerDeuxOngletsEnPieceJointeEtModifCorps()
+    On Error GoTo ErrorHandler
+    
+    Application.ScreenUpdating = False
+    Dim connectedUser As String, connectedUserFormulaire As String
+    connectedUser = FW_VBA.OverridenConnectedUser(Application.userName)
+    connectedUserFormulaire = connectedUser & "_Form"
+    
+    Dim OutlookApp  As Object
+    Dim OutlookMail As Object
+    Dim NouveauClasseur As Workbook
+    Dim TempFilePath As String
+    Dim TempFileName As String
+    
+    '###
+    Dim EmailBody   As String
+    Dim Cel         As Range
+    Dim Ligne       As Range
+    Dim Plage1      As Range, Plage2 As Range
+    Dim Onglet6     As Worksheet
+    Dim skip_maj_suivi As Boolean
+    
+    EmailBody = "Vous trouverez en pièces jointes les onglets contenant des données"
+    
+    If FW_VBA.IsSheetFound(connectedUserFormulaire) Then
+        
+        ' Définir les onglets à envoyer
+        Set Onglet6 = ThisWorkbook.Sheets(connectedUserFormulaire)        ' Remplacez par le nom du premier onglet
+        Sheets(connectedUserFormulaire).Activate
+        skip_maj_suivi = Range("skip_maj_suivi")
+        
+        ' Construire le corps de l'email avec les données du premier onglet
+        Range1 = Range("source_copied_HIS_KAM")
+        Set Plage1 = Onglet6.Range(Range1)
+        
+        EmailBody = "<html><body>"
+        EmailBody = EmailBody & "<h2>Données à ajouter à        'historique KAM de l'onglet " & Onglet6.Name & "</h2>"
+        EmailBody = EmailBody & "<table        '1' cellspacing='0' cellpadding='5'>"
+        
+        For Each Ligne In Plage1.Rows
+            EmailBody = EmailBody & "<tr>"
+            For Each Cel In Ligne.Cells
+                EmailBody = EmailBody & "<td>" & Cel.Value & "</td>"
+            Next Cel
+            EmailBody = EmailBody & "</tr>"
+        Next Ligne
+        
+        EmailBody = EmailBody & "</table><br>"
+        
+        ' Ajouter les données du deuxième onglet dans le corps de l'email
+        If skip_maj_suivi = False Then
+            
+            Range2 = Range("source_copied_HIS_Suivi")
+            Set Plage2 = Onglet6.Range(Range2)
+            
+            EmailBody = EmailBody & "<h2>Données à ajouter à        'historique Suivi de l'onglet " & Onglet6.Name & "</h2>"
+            EmailBody = EmailBody & "<table        '1' cellspacing='0' cellpadding='5'>"
+            
+            For Each Ligne In Plage2.Rows
+                EmailBody = EmailBody & "<tr>"
+                For Each Cel In Ligne.Cells
+                    EmailBody = EmailBody & "<td>" & Cel.Value & "</td>"
+                Next Cel
+                EmailBody = EmailBody & "</tr>"
+            Next Ligne
+            
+            EmailBody = EmailBody & "</table>"
+            EmailBody = EmailBody & "</body></html>"
+            
+        End If
+        
+    End If
+    '######
+    
+    'Sauvegarder la visibilité actuelle des onglets
+    Dim visOnglet1     As String
+    Dim visOnglet2     As String
+    Dim visOnglet3     As String
+    Dim visOnglet4     As String
+    Dim visOnglet5     As String
+    
+    visOnglet1 = Worksheets("Historique_Suivi").Visible
+    visOnglet2 = Worksheets("Historique_KAM").Visible
+    visOnglet3 = Worksheets("Historique_Priorite").Visible
+    visOnglet4 = Worksheets("GestionRef").Visible
+    visOnglet5 = Worksheets("Admin").Visible
+    
+    'Rendre visible les onglets
+    
+    Worksheets("Historique_Suivi").Visible = xlSheetVisible
+    Worksheets("Historique_KAM").Visible = xlSheetVisible
+    Worksheets("Historique_Priorite").Visible = xlSheetVisible
+    Worksheets("GestionRef").Visible = xlSheetVisible
+    Worksheets("Admin").Visible = xlSheetVisible
+    
+
+    
+    ' Définir les onglets à envoyer
+    Dim Onglet1     As Worksheet
+    Dim Onglet2     As Worksheet
+    Dim Onglet3     As Worksheet
+    Dim Onglet4     As Worksheet
+    Dim Onglet5     As Worksheet
+    Set Onglet1 = ThisWorkbook.Sheets("Historique_Suivi")        ' Remplacez par le nom du premier onglet
+    Set Onglet2 = ThisWorkbook.Sheets("Historique_KAM")        ' Remplacez par le nom du deuxième onglet
+    Set Onglet3 = ThisWorkbook.Sheets("Historique_Priorite")        ' Remplacez par le nom du deuxième onglet
+    Set Onglet4 = ThisWorkbook.Sheets("GestionRef")        ' Remplacez par le nom du deuxième onglet
+    Set Onglet5 = ThisWorkbook.Sheets("Admin")        ' Remplacez par le nom du deuxième onglet
+    
+    ' Créer un nouveau classeur
+    Set NouveauClasseur = Workbooks.Add
+    
+    
+    ' Copier les deux onglets dans le nouveau classeur
+    Onglet1.Copy After:=NouveauClasseur.Sheets(NouveauClasseur.Sheets.Count)
+    Onglet2.Copy After:=NouveauClasseur.Sheets(NouveauClasseur.Sheets.Count)
+    Onglet3.Copy After:=NouveauClasseur.Sheets(NouveauClasseur.Sheets.Count)
+    Onglet4.Copy After:=NouveauClasseur.Sheets(NouveauClasseur.Sheets.Count)
+    Onglet5.Copy After:=NouveauClasseur.Sheets(NouveauClasseur.Sheets.Count)
+    
+    ' Supprimer la feuille vide qui est créée par défaut dans le nouveau classeur
+    Application.DisplayAlerts = False
+    NouveauClasseur.Sheets(1).Delete
+    Application.DisplayAlerts = True
+    
+    ' Enregistrer le fichier temporaire
+    TempFilePath = Environ$("temp") & "\"
+    TempFileName = "Onglets_Temp.xlsx"
+    NouveauClasseur.SaveAs TempFilePath & TempFileName
+    NouveauClasseur.Close False
+    
+    ' Créer une instance d'Outlook
+    Set OutlookApp = CreateObject("Outlook.Application")
+    Set OutlookMail = OutlookApp.CreateItem(0)        ' 0 signifie un email
+    
+    ' Préparer et envoyer l'email
+    With OutlookMail
+        .To = "maxime.alary@soprasteria.com"        ' Remplacez par l'adresse email du destinataire
+        .Subject = "backup fichier KAM"
+        .HTMLBody = EmailBody        ' Définir le corps de l'email en HTML
+        .Attachments.Add TempFilePath & TempFileName        ' Joindre le fichier temporaire
+        '.display
+        .Send
+    End With
+    
+    ' Supprimer le fichier temporaire après l'envoi
+    Kill TempFilePath & TempFileName
+    
+    'Remettre la bonne visibilité des onglets
+        Worksheets("Historique_Suivi").Visible = visOnglet1
+    Worksheets("Historique_KAM").Visible = visOnglet2
+    Worksheets("Historique_Priorite").Visible = visOnglet3
+    Worksheets("GestionRef").Visible = visOnglet4
+    Worksheets("Admin").Visible = visOnglet5
+    
+    ' Libérer les objets
+    Set OutlookMail = Nothing
+    Set OutlookApp = Nothing
+    
+    Application.ScreenUpdating = True
+    Exit Sub
+   
+ErrorHandler:
+        MsgBox ("Le traitement d'envoi automatique par mail des saisies n'a pas fonctionné. Merci d'avertir un admin")
+End Sub
+
