@@ -1,0 +1,112 @@
+
+Private Sub Label1_Click()
+
+End Sub
+
+'###########################################
+' Initialiser la pop in d'ajout de compétences
+'###########################################
+Private Sub UserForm_Initialize()
+    Dim rg          As Range, connectedUserFormulaire As String, wb As Workbook
+    Set wb = ThisWorkbook
+    connectedUserFormulaire = wb.ActiveSheet.Name
+    Sheets(connectedUserFormulaire).Activate
+    Set rg = Range("listBox_plage")
+    
+
+    
+    'Fixer la taille du userForm
+    With Me
+        .Height = 160
+        .Width = 530
+        .BackColor = RGB(217, 217, 217)
+        .BorderStyle = fmBorderStyleSingle
+        .BorderColor = RGB(150, 150, 150)
+        .Caption = FW_VBA.RetrieveMessageToDisplay("vba_code_message", "userformOverridenNameTitle")
+    End With
+
+    Me.StartUpPosition = 0
+    
+    Me.Top = Application.Top + (Application.Height - Me.Height) / 2
+    Me.Left = Application.Left + (Application.Width - Me.Width) / 2
+
+    'Fixer la taille du textBox
+    With Label1
+        .Width = 498
+        .Height = 12
+        .BackColor = RGB(217, 217, 217)
+        .Caption = FW_VBA.RetrieveMessageToDisplay("vba_code_message", "userformOverridenNameMessage")
+
+    End With
+    
+    'Fixer la taille du textBox
+    With TextBox1
+        .Width = 160
+        .Height = 25
+        .Locked = False
+        .BackColor = RGB(250, 250, 250)
+    End With
+    
+    With CommandButton1
+    .Font.Bold = True
+    .Font.Size = 10
+    .ForeColor = RGB(250, 250, 250)
+    .BackColor = RGB(112, 173, 71)
+    .Width = 114
+    .Height = 30
+    End With
+
+
+     With CommandButton2
+    .Font.Bold = True
+    .Font.Size = 10
+    .ForeColor = RGB(250, 250, 250)
+    .BackColor = RGB(192, 0, 0)
+    .Width = 114
+    .Height = 30
+    End With
+End Sub
+
+'###########################################
+' Action associée au bouton Quitter
+'###########################################
+Private Sub CommandButton2_Click()
+    Unload Me
+End Sub
+
+
+
+'###########################################
+' Actions associées au bouton Sauvegarder
+'###########################################
+Private Sub CommandButton1_Click()
+    Dim connectedUserFormulaire As String, connectedUser As String, wb As Workbook, displayedLengthErrorMessage As String, adminTabVisibility As String
+    Set wb = ThisWorkbook
+    adminTabVisibility = Worksheets("Admin").Visible
+    connectedUserFormulaire = wb.ActiveSheet.Name
+    connectedUser = Left(connectedUserFormulaire, InStrRev(connectedUserFormulaire, "_") - 1)
+    'Verifier la taille du nouveau nom/prénom
+    If FW_VBA.isStringLengthMaxCorrect(TextBox1.Value, 26) Then
+        'Vérifier que le nom n'est pas déjà utilisé
+        If FW_VBA.isDuplicateValueInTable("Declaration_generale_utilisateur", TextBox1.Value) = False Then
+            Worksheets("Admin").Visible = xlSheetVisible
+            Range("surcharge_nom").Value = TextBox1.Value
+            Call AdminModule.addOverridenNameConfiguration(connectedUserFormulaire)
+            Sheets(connectedUserFormulaire).Activate
+            Unload Me
+            
+        Else
+            'Message d'erreur en cas de doublon, le formulaire reste ouvert
+            MsgBox FW_VBA.RetrieveMessageToDisplay("vba_code_message", "errorDuplicateUserMessage"), Title:="Information"
+        End If
+        
+    Else
+        displayedLengthErrorMessage = FW_VBA.RetrieveMessageToDisplay("vba_code_message", "overridenNameLenghtMessage")
+        displayedLengthErrorMessage = Replace(displayedLengthErrorMessage, "{{currentLength}}", Len(TextBox1.Value))
+        'Message d'erreur en cas de taille trop longue, le formulaire reste ouvert
+        MsgBox displayedLengthErrorMessage, Title:="Information"
+        
+    End If
+Worksheets("Admin").Visible = adminTabVisibility
+End Sub
+

@@ -1,0 +1,43 @@
+
+
+
+' Barre de progression
+'
+' Auteur:  JM. Olivier
+' 09.02.2018
+'
+' Compatibilités (vérifiées) :
+' Windows 7 et 10
+' Office 2010 – Excel et Powerpoint 14
+' Office 2013 – Excel et Powerpoint 15
+' Office 2016 – Excel et Powerpoint 16
+' Office 365 (2104)
+
+Option Explicit
+
+Private Sub Label1_Click()
+
+End Sub
+
+Private Sub lblProgress_Click()
+
+End Sub
+
+Private Sub lblProgressBar_Click()
+
+End Sub
+
+Private Sub UserForm_Initialize()
+    
+    Me.StartUpPosition = 0
+    
+    Me.Top = Application.Top + (Application.Height - Me.Height) / 2
+    Me.Left = Application.Left + (Application.Width - Me.Width) / 2
+    Me.Height = 65
+    Me.Width = 210
+    
+    Call RemoveTitleBarAndSetTop(Me)
+    
+    'lblProgress.Width = 0
+
+End Sub
