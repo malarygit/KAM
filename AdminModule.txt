@@ -1,0 +1,1177 @@
+'###########################################
+' Permet de gérer la visibilité des onglets
+'###########################################
+Sub UpdateUserConnectedRights(connectedUser As String, Optional defaultMode As String)
+
+    If defaultMode = "defaultMode" Then
+                Worksheets("Admin").Visible = xlSheetHidden
+                Worksheets("GestionRef").Visible = xlSheetVeryHidden
+                Worksheets("Template_Form").Visible = xlSheetVeryHidden
+                Worksheets("Historique_Suivi").Visible = xlSheetVeryHidden
+                Worksheets("Template_Suivi").Visible = xlSheetVeryHidden
+                Worksheets("Historique_KAM").Visible = xlSheetVeryHidden
+                Worksheets("Historique_Priorite").Visible = xlSheetVeryHidden
+                Worksheets("Suggestion_compétences").Visible = xlSheetHidden
+                Worksheets("Template_Accueil").Visible = xlSheetVeryHidden
+                Worksheets("Template_Priorite_Compétences").Visible = xlSheetVeryHidden
+                Worksheets("Template_Ajout_Compétences").Visible = xlSheetVeryHidden
+                
+            Exit Sub
+    End If
+    
+    Dim tab_droit() As Variant, k As Integer, userFound As Boolean, editionMode As Boolean, currentRight As String, indexActeur As Integer, indexDroits As Integer
+    tab_droit = Range("Declaration_generale_utilisateur")
+    indexActeur = FW_VBA.returnedIndexColumnHeader("Declaration_generale_utilisateur", "Acteur")
+    indexDroits = FW_VBA.returnedIndexColumnHeader("Declaration_generale_utilisateur", "Droits")
+    userFound = False
+    editionMode = False
+    
+    Worksheets("Referentiel").Visible = xlSheetVisible
+    Worksheets("KAM").Visible = xlSheetVisible
+    
+    ' On parcourt le tableau Declaration_generale_utilisateur de l'onglet Admin pour aller vérifier la colonne Droits (Admin, Contributeur ou Collaborateur)
+    For k = 1 To UBound(tab_droit)
+        If tab_droit(k, indexActeur) = connectedUser Then
+            userFound = True
+            currentRight = tab_droit(k, indexDroits)
+            'currentRight = "Admin"
+            ' Cas Admin
+            If currentRight = "Admin" Then
+                Worksheets("Admin").Visible = xlSheetVisible
+                Worksheets("GestionRef").Visible = xlSheetVisible
+                Worksheets("Suggestion_compétences").Visible = xlSheetVisible
+                Worksheets("Template_Priorite_Compétences").Visible = xlSheetVeryHidden
+                Worksheets("Template_Ajout_Compétences").Visible = xlSheetVeryHidden
+                If editionMode Then
+                    Worksheets("Template_Form").Visible = xlSheetVisible
+                    Worksheets("Template_Suivi").Visible = xlSheetVisible
+                    Worksheets("Historique_Suivi").Visible = xlSheetVisible
+                    Worksheets("Historique_KAM").Visible = xlSheetVisible
+                    Worksheets("Historique_Priorite").Visible = xlSheetVisible
+                    Worksheets("Template_Accueil").Visible = xlSheetVisible
+                Else
+                    Worksheets("Template_Form").Visible = xlSheetHidden
+                    Worksheets("Template_Suivi").Visible = xlSheetHidden
+                    Worksheets("Historique_Suivi").Visible = xlSheetHidden
+                    Worksheets("Historique_KAM").Visible = xlSheetHidden
+                    Worksheets("Historique_Priorite").Visible = xlSheetHidden
+                    Worksheets("Template_Accueil").Visible = xlSheetHidden
+                End If
+                
+                'Cas Contributeur
+            ElseIf currentRight = "Contributeur" Then
+                Worksheets("Admin").Visible = xlSheetHidden
+                Worksheets("GestionRef").Visible = xlSheetVisible
+                Worksheets("Template_Form").Visible = xlSheetVeryHidden
+                Worksheets("Template_Suivi").Visible = xlSheetVeryHidden
+                Worksheets("Historique_Suivi").Visible = xlSheetVeryHidden
+                Worksheets("Historique_KAM").Visible = xlSheetVeryHidden
+                Worksheets("Historique_Priorite").Visible = xlSheetVeryHidden
+                Worksheets("Suggestion_compétences").Visible = xlSheetVisible
+                Worksheets("Template_Accueil").Visible = xlSheetVeryHidden
+                Worksheets("Template_Priorite_Compétences").Visible = xlSheetVeryHidden
+                Worksheets("Template_Ajout_Compétences").Visible = xlSheetVeryHidden
+                
+                'Cas Collaborateur
+            Else
+                Worksheets("Admin").Visible = xlSheetHidden
+                Worksheets("GestionRef").Visible = xlSheetVeryHidden
+                Worksheets("Template_Form").Visible = xlSheetVeryHidden
+                Worksheets("Historique_Suivi").Visible = xlSheetVeryHidden
+                Worksheets("Template_Suivi").Visible = xlSheetVeryHidden
+                Worksheets("Historique_KAM").Visible = xlSheetVeryHidden
+                Worksheets("Historique_Priorite").Visible = xlSheetVeryHidden
+                Worksheets("Suggestion_compétences").Visible = xlSheetHidden
+                Worksheets("Template_Accueil").Visible = xlSheetVeryHidden
+                Worksheets("Template_Priorite_Compétences").Visible = xlSheetVeryHidden
+                Worksheets("Template_Ajout_Compétences").Visible = xlSheetVeryHidden
+            End If
+        End If
+    Next
+    
+    ' Cas aux limites : quand le nom/prénom du connectedUser n'est pas présent dans le tableau Declaration_generale_utilisateur
+    If userFound = False Then
+        Worksheets("Admin").Visible = xlSheetHidden
+        Worksheets("GestionRef").Visible = xlSheetVeryHidden
+        Worksheets("Template_Form").Visible = xlSheetVeryHidden
+        Worksheets("Historique_Suivi").Visible = xlSheetVeryHidden
+        Worksheets("Historique_KAM").Visible = xlSheetVeryHidden
+        Worksheets("Historique_Priorite").Visible = xlSheetVeryHidden
+        Worksheets("Template_Suivi").Visible = xlSheetVeryHidden
+        Worksheets("Suggestion_compétences").Visible = xlSheetVeryHidden
+        Worksheets("Template_Accueil").Visible = xlSheetVeryHidden
+        Worksheets("Template_Priorite_Compétences").Visible = xlSheetVeryHidden
+        Worksheets("Template_Ajout_Compétences").Visible = xlSheetVeryHidden
+    End If
+    
+End Sub
+
+'###########################################
+' Permet de copier l'image full des compétences évaluées ou déjà évaluées précédemment et mettre à jour la taille/plage de l'historique si besoin
+'###########################################
+Sub CopyToHistoryKAM(connectedUser As String)
+    Dim connectedUserFormulaire As String, wb As Workbook, historyFormulaireSourceRange As String, historyTargetRange As String, historySize As Integer, historyCleanRange As String, adminTabVisibility As String
+    connectedUserFormulaire = connectedUser & "_Form"
+    Set wb = ThisWorkbook
+    adminTabVisibility = Worksheets("Historique_KAM").Visible
+    ' Désactiver les mises à jour IHM
+    Application.ScreenUpdating = False
+    Application.DisplayAlerts = False
+    
+    Sheets(connectedUserFormulaire).Activate
+    Worksheets("Historique_KAM").Visible = xlSheetVisible
+    historyFormulaireSourceRange = Range("source_copied_HIS_KAM")
+    historyTargetRange = Range("index_Historique_KAM")
+    historyCleanRange = Range("equiv_acteur_KAM_clean")
+    historySize = Range("taille_nouvel_historique_KAM").Value
+    
+    'Tester la future taille d'historique de cet utilisateur
+    ' Si besoin mettre à jour la taille max stockée dnas max_taille_historique_KAM ainsi que la plage de l'historique de suivi stocké dans Historique_KAM_tab
+    If historySize > Range("Admin!max_taille_historique_KAM").Value Then
+            'Mettre à jour la plage d'historique
+            Call FW_VBA.UpdateHeightAdressRange("Historique_KAM_tab", historySize, wb)
+            'Mettre à jour la valeur de la taille max
+            Range("Admin!max_taille_historique_KAM").Value = historySize
+       
+    End If
+    
+            'Nettoyer l'historique KAM actuel  de l'acteur courant  ###pas de clean pour le moment car la suppression modifie l'historyTargetRange
+               ' Worksheets("Historique_KAM").Visible = xlSheetVisible
+                'Sheets("Historique_KAM").Activate
+            'Clean
+                'Columns(historyCleanRange).Select
+                'Selection.ClearContents
+    'Copier les données de l'évaluation courante dans l'onglet d'historique.
+    'Sheets(connectedUserFormulaire).Activate
+    Call FW_VBA.CopyRangeAndPastInCellRange(connectedUserFormulaire, historyFormulaireSourceRange, "Historique_KAM", historyTargetRange)
+    Sheets(connectedUserFormulaire).Activate
+    'Afficher les onglets en fonction des droits de l'utilisateur connecté
+    Worksheets("Historique_KAM").Visible = adminTabVisibility
+    Application.ScreenUpdating = True
+    Application.DisplayAlerts = True
+    
+End Sub
+
+'###########################################
+' Permet de copier le delta des compétences (ré) évaluées et mettre à jour la taille/plage de l'historique si besoin
+'###########################################
+Sub CopyToHistorySuivi(connectedUser As String)
+    Dim connectedUserFormulaire As String, wb As Workbook, historyFormulaireSourceRange As String, historyTargetRange As String, skipHistoryCopy As Boolean, historySize As Integer, adminTabVisibility As String
+    connectedUserFormulaire = connectedUser & "_Form"
+    adminTabVisibility = Worksheets("Historique_Suivi").Visible
+    Set wb = ThisWorkbook
+    ' Désactiver les mises à jour IHM
+    Application.ScreenUpdating = False
+    Sheets(connectedUserFormulaire).Activate
+    skipHistoryCopy = Range("skip_maj_Suivi")
+        
+    If skipHistoryCopy = False Then
+        
+        Worksheets("Historique_Suivi").Visible = xlSheetVisible
+        historyFormulaireSourceRange = Range("source_copied_HIS_Suivi")
+        historyTargetRange = Range("index_Historique_Suivi")
+        historySize = Range("taille_nouvel_historique_Suivi").Value
+        
+        ' Si la taille de l'historique courant dépasse le plus grand actuel
+        If historySize > Range("Admin!max_taille_historique_Suivi").Value Then
+            'Mettre à jour la plage d'historique
+            Call FW_VBA.UpdateHeightAdressRange("Historique_Suivi_tab", historySize, wb)
+            'Mettre à jour la valeur de la taille max
+            Range("Admin!max_taille_historique_Suivi").Value = historySize
+
+        End If
+        
+        'Copier les données de l'évaluation courante dans l'onglet d'historique. On se sert de historyTargetRange calculé dans le fichier excel pour savoir dans quelle cellule coller les infos
+        Call FW_VBA.CopyRangeAndPastInCellRange(connectedUserFormulaire, historyFormulaireSourceRange, "Historique_Suivi", historyTargetRange)
+        Sheets(connectedUserFormulaire).Activate
+    End If
+    'Afficher les onglets en fonction des droits de l'utilisateur connecté
+    Worksheets("Historique_Suivi").Visible = adminTabVisibility
+    ' Réactiver les mises à jour IHM
+    Application.ScreenUpdating = True
+    
+End Sub
+
+
+
+'###########################################
+' Permet d'initialiser l'onglet de suivi qui est affiché par défaut à l'ouverture
+'###########################################
+Sub InitSuivi(connectedUser As String)
+    Dim connectedUserSuivi    As String, adminTabVisibility As String
+    connectedUserSuivi = connectedUser & "_Suivi"
+    adminTabVisibility = Worksheets("Template_Suivi").Visible
+    
+    'Desactiver les alertes pour éviter de voir apparaitre un pop in native car on duplique les noms des plages nommées
+    Application.DisplayAlerts = False
+    'Copier l'onglet Template_Suivi et le renommer en {{connectedUser}}_Suivi
+    Worksheets("Template_Suivi").Visible = xlSheetVisible
+    Sheets("Template_Suivi").Copy Before:=Sheets(1)
+    SendKeys "{RIGHT}", True
+    ActiveSheet.Name = connectedUserSuivi
+    Sheets(connectedUserSuivi).Activate
+    
+    
+    'Ajouter une liste déroulante avec le nom des personnes que l'on supervise
+    ' "nom_suivi" : plage nommé de la cellule du coin gauche qui contient la liste déroulante - "list_mopes" : liste des personnes que l'on supervise
+    Range("acteur_mop").Value = connectedUser
+    Call SetUserListForSuivi(connectedUser, "nom_suivi", "liste_mopes", 1)
+    Call AdminModule.UpdateButtonVisibility(connectedUser)
+    Worksheets("Template_Suivi").Visible = adminTabVisibility
+    'Réactiver les alertes
+    Application.DisplayAlerts = True
+End Sub
+
+
+
+'###########################################
+'Permet d 'afficher dans une popin  l ensemble des messages plus récent que la date de dernière connexion
+'###########################################
+Sub InfoPopIn(connectedUser As String)
+    Dim messageList As Variant, usersGeneralConfiguration As Variant, lastConnexionDate As Date, fullMessage As String, displayInfo As Boolean, wb As Workbook, indexActeur As Integer, indexLastConnexionDate As Integer, displayedTitleMessage As String, indexMessage As Integer, indexDateMessage As Integer
+    Set wb = ThisWorkbook
+    messageList = Range("messages_info")
+    usersGeneralConfiguration = Range("Declaration_generale_utilisateur")
+    ' Cas aux limites : si l'information date de dernière connexion est absente
+    lastConnexionDate = "01/01/1900"
+    displayInfo = False
+    displayedTitleMessage = "Bonjour " & connectedUser
+    indexActeur = FW_VBA.returnedIndexColumnHeader("Declaration_generale_utilisateur", "Acteur")
+    indexLastConnexionDate = FW_VBA.returnedIndexColumnHeader("Declaration_generale_utilisateur", "Date derniere connexion")
+    
+    ' Chercher l'utilisateur et récupérer la date de dernière connexion
+    For i = 1 To UBound(usersGeneralConfiguration)
+        If usersGeneralConfiguration(i, indexActeur) = connectedUser And usersGeneralConfiguration(i, indexLastConnexionDate) <> "" Then
+            lastConnexionDate = usersGeneralConfiguration(i, indexLastConnexionDate)
+        End If
+    Next
+    
+    ' Calcul du champ fullMessage qui est la concaténation de tous les messages plus récents que la date de dernière connexion
+    ' En cas d'absence de date sur le message il est également affiché
+    indexMessage = FW_VBA.returnedIndexColumnHeader("messages_info", "Messages")
+    indexDateMessage = FW_VBA.returnedIndexColumnHeader("messages_info", "Dates")
+    For i = 1 To UBound(messageList)
+        If messageList(i, indexDateMessage) = "" Or messageList(i, indexDateMessage) >= lastConnexionDate Then
+            displayInfo = True
+            fullMessage = fullMessage & messageList(i, indexMessage) & Chr(13) & Chr(10)
+        End If
+    Next
+    
+    'Afficher la pop in d'information
+    If displayInfo Then
+        MsgBox FW_VBA.RetrieveMessageToDisplay("vba_code_message", "informationSinceLastConnexionMessage") & Chr(13) & Chr(10) & Chr(13) & Chr(10) & fullMessage, Title:=displayedTitleMessage
+    End If
+    
+    ' Mettre à jour la date de dernière connexion dans le tableau Declaration_generale_utilisateur avec la date actuelle
+    For i = 1 To UBound(usersGeneralConfiguration)
+        If usersGeneralConfiguration(i, indexActeur) = connectedUser Then
+            Range(Left(wb.Names.Item("Admin!vba_entete_date_derniere_co").RefersToLocal, InStrRev(wb.Names.Item("Admin!vba_entete_date_derniere_co").RefersToLocal, "$")) & i + 1) = Date
+        End If
+    Next
+    
+End Sub
+
+
+
+
+
+
+'###########################################
+' Macro associée au bouton "Ajouter d'autres compétences à évaluer" de l'onglet {{connectedUser}}_Suivi
+'###########################################
+Sub OuvrirUserFormAjoutCompetence()
+Dim wb As Workbook, displayedMessage As String
+    Set wb = ThisWorkbook
+    connectedUser = Left(wb.ActiveSheet.Name, InStrRev(wb.ActiveSheet.Name, "_") - 1)
+    confirmationMessageDisplayed = FW_VBA.RetrieveMessageToDisplay("vba_code_message", "permissionDeniedMessage")
+    confirmationMessageDisplayed = Replace(confirmationMessageDisplayed, "{{currentUser}}", connectedUser)
+    If hasPermission(connectedUser) Then
+        UserForm1.Show
+    Else
+            MsgBox confirmationMessageDisplayed, Title:="Permission refusée"
+    End If
+End Sub
+
+'###########################################
+' Macro associée au bouton "Définir les compétences prioritaires" de l'onglet {{connectedUser}}_Suivi
+'###########################################
+Sub OuvrirUserFormPrioriserCompetence()
+Dim wb As Workbook, displayedMessage As String
+    Set wb = ThisWorkbook
+    connectedUser = Left(wb.ActiveSheet.Name, InStrRev(wb.ActiveSheet.Name, "_") - 1)
+    confirmationMessageDisplayed = FW_VBA.RetrieveMessageToDisplay("vba_code_message", "permissionDeniedMessage")
+    confirmationMessageDisplayed = Replace(confirmationMessageDisplayed, "{{currentUser}}", connectedUser)
+    If hasPermission(connectedUser) Then
+        UserForm2.Show
+    Else
+            MsgBox confirmationMessageDisplayed, Title:="Permission refusée"
+    End If
+End Sub
+
+'###########################################
+' Macro associée au bouton "Suggérer une nouvelle compétence" de l'onglet Suggestion_compétences
+'###########################################
+Sub OuvrirOngletSuggestionCompetence()
+Dim connectedUser As String
+    connectedUser = FW_VBA.OverridenConnectedUser(Application.userName)
+    
+    If AdminModule.NeedSuivitab(connectedUser) Then
+        Worksheets("Suggestion_compétences").Visible = xlSheetVisible
+        Sheets("Suggestion_compétences").Activate
+    Else
+            MsgBox FW_VBA.RetrieveMessageToDisplay("vba_code_message", "defaultPermissionDeniedMessage"), Title:="Permission refusée"
+    End If
+End Sub
+
+'###########################################
+' Macro associée au bouton "Backup fichier" de l'onglet Admin
+'###########################################
+Sub GénérerBackupFichier()
+Call SendMail.EnvoyerDeuxOngletsEnPieceJointeEtModifCorps
+End Sub
+
+'###########################################
+' Macro associée au bouton "Fermer" de l'onglet Suggestion_compétences
+'###########################################
+Sub FermerOngletSuggestionCompetence()
+    Dim connectedUser As String
+    connectedUser = FW_VBA.OverridenConnectedUser(Application.userName)
+    ' La condition pour initialiser l'onglet suivi est la même que pour permettre de suggérer une nouvelle compétence
+    If AdminModule.NeedSuivitab(connectedUser) Then
+        Sheets("Referentiel").Activate
+        'Call AdminModule.UpdateUserConnectedRights(connectedUser, "defaultMode")
+    Else
+        MsgBox FW_VBA.RetrieveMessageToDisplay("vba_code_message", "defaultPermissionDeniedMessage"), Title:="Permission refusée"
+    End If
+    
+End Sub
+                                    
+'###########################################
+' Macro associée au bouton "Fermer" de l'onglet Formulaire
+'###########################################
+Sub FermerOngletFormulaire()
+    Dim connectedUser As String, closeConfirmation As Integer, connectedUserFormulaire As String, confirmationMessageDisplayed As String
+    connectedUser = FW_VBA.OverridenConnectedUser(Application.userName)
+    connectedUserFormulaire = connectedUser & "_Form"
+    confirmationMessageDisplayed = FW_VBA.RetrieveMessageToDisplay("vba_code_message", "permissionDeniedMessage")
+    confirmationMessageDisplayed = Replace(confirmationMessageDisplayed, "{{currentUser}}", connectedUser)
+    Application.DisplayAlerts = False
+    ' La condition pour initialiser l'onglet suivi est la même que pour permettre de suggérer une nouvelle compétence
+    If hasPermission(connectedUser) Then
+        closeConfirmation = MsgBox(FW_VBA.RetrieveMessageToDisplay("vba_code_message", "closeFormulaireWithoutSaving"), vbQuestion + vbYesNo + vbDefaultButton2, "Information")
+        If closeConfirmation = vbYes Then
+            Sheets(connectedUserFormulaire).Delete
+        End If
+        
+    Else
+            MsgBox confirmationMessageDisplayed, Title:="Permission refusée"
+    End If
+    Application.DisplayAlerts = True
+End Sub
+
+
+'###########################################
+' Macro associée au bouton "Acceuillir un nouveau collaborateur" de l'onglet KAM
+'###########################################
+Sub GenererFormulaireAcceuil()
+    Dim connectedUser As String, connectedUserFormulaire As String, adminTabVisibility As String
+    connectedUser = FW_VBA.OverridenConnectedUser(Application.userName)
+    connectedUserFormulaire = connectedUser & "_Accueil"
+    adminTabVisibility = Worksheets("Template_Accueil").Visible
+    
+    If IsSheetFound(connectedUserFormulaire) = True Then
+        Sheets(connectedUserFormulaire).Activate
+    Else
+        If canAddUsers(connectedUser) Then
+            'Worksheets("Template_Accueil").Visible = xlSheetVisible
+            'Sheets("Template_Accueil").Activate
+            
+            'Desactiver les alertes pour éviter de voir apparaitre un pop in native inutile
+            Application.DisplayAlerts = False
+            'Copier onglet template
+            Worksheets("Template_Accueil").Visible = xlSheetVisible
+            Sheets("Template_Accueil").Copy Before:=Sheets(1)
+            SendKeys "{RIGHT}", True
+            'Renommer l'onglet
+            ActiveSheet.Name = connectedUserFormulaire
+            Sheets(connectedUserFormulaire).Activate
+            Call FW_VBA.propagateExcelFormula(connectedUserFormulaire, Range("range_initial_case_a_cocher"), Range("range_final_case_a_cocher"))
+        Else
+            MsgBox FW_VBA.RetrieveMessageToDisplay("vba_code_message", "defaultPermissionDeniedMessage"), Title:="Permission refusée"
+        End If
+    End If
+       'Afficher les onglets en fonction des droits de l'utilisateur connecté
+    Worksheets("Template_Accueil").Visible = adminTabVisibility
+End Sub
+
+'###########################
+'Macro associée au bouton "Rafraichir KAM" dans l'onglet GestionRef
+'###########################
+Sub MettreAJourListeCompetencesKAM()
+    Dim startPosition As Integer, lengthSkillList As Integer, wb As Workbook
+    Set wb = ThisWorkbook
+    startPosition = Range("idx_KAM_final_item1").Row
+    lengthSkillList = Range("HistoriqueKAM_lignesActives")
+    'Update range
+    Call FW_VBA.UpdateHeightAdressRange("KAM_body", lengthSkillList + startPosition, wb)
+End Sub
+
+
+'###########################################
+' Permet d'afficher le formulaire de surcharge en cas de long trop nom dans le formulaire d'accueil
+'###########################################
+Sub OuvrirUserFormOverridenName()
+
+        UserForm3.Show
+
+End Sub
+
+
+'###########################################
+' Macro associée au bouton "Fermer" de l'onglet Template_Accueil
+'###########################################
+Sub FermerOngletAccueilCollaborateur()
+    Dim connectedUser As String, connectedUserFormulaire As String, confirmationMessageDisplayed As String
+    connectedUser = FW_VBA.OverridenConnectedUser(Application.userName)
+    confirmationMessageDisplayed = FW_VBA.RetrieveMessageToDisplay("vba_code_message", "permissionDeniedMessage")
+    confirmationMessageDisplayed = Replace(confirmationMessageDisplayed, "{{currentUser}}", connectedUser)
+    
+    If hasPermission(connectedUser) Then
+        connectedUserFormulaire = connectedUser & "_Accueil"
+        Sheets("KAM").Activate
+        FW_VBA.DeleteSheet (connectedUserFormulaire)
+        'Call AdminModule.UpdateUserConnectedRights(connectedUser, "defaultMode")
+    Else
+            MsgBox confirmationMessageDisplayed, Title:="Permission refusée"
+    End If
+    
+End Sub
+
+'###########################################
+' Macro associée au bouton Sauvegarder du formulaire de saisi des compétences.
+' Affiche une pop in avec choix Oui/Non.
+' Non : pop in fermée et il ne se passe rien
+' Oui : copie la saisie vers les onglets d'historiques et ferme l'onglet Formulaire
+'###########################################
+Sub Bouton_SauvegarderKAM()
+    Dim saveAndClose As Integer, connectedUserFormulaire As String, connectedUser As String, wb As Workbook, displayedMessage As String, inputValueAreValid As Boolean
+    Set wb = ThisWorkbook
+    connectedUser = Range("KAM_acteur")
+    connectedUserFormulaire = connectedUser & "_Form"
+    confirmationMessageDisplayed = FW_VBA.RetrieveMessageToDisplay("vba_code_message", "permissionDeniedMessage")
+    confirmationMessageDisplayed = Replace(confirmationMessageDisplayed, "{{currentUser}}", connectedUser)
+    inputValueAreValid = Range("input_are_valid")
+    
+    ' Stocker la date horodaté de création du formulaire. Sert au stockage du Suivi qui est horodaté
+    Range("date_saisie_horodate").Value = Now()
+    
+    If inputValueAreValid Then
+        
+        If hasPermission(connectedUser) Then
+            'afficher la popin avec choix oui/non
+            saveAndClose = MsgBox(FW_VBA.RetrieveMessageToDisplay("vba_code_message", "informationBeforeSavingSkillsMessage"), vbQuestion + vbYesNo + vbDefaultButton2, "Information")
+            'choix oui -> copier les colonnes du formulaire dans l'onglet d'historique puis supprimer l'onglet du formulaire
+            If saveAndClose = vbYes Then
+                Call ManageProgressBar("Set")
+                Call ManageProgressBar("Update", 0.1)
+                Call SendMail.EnvoyerDeuxOngletsEnPieceJointeEtModifCorps
+                Call ManageProgressBar("Update", 0.3)
+                Call CopyToHistorySuivi(connectedUser)
+                Call ManageProgressBar("Update", 0.7)
+                Call CopyToHistoryKAM(connectedUser)
+                Call ManageProgressBar("Update", 0.9)
+                FW_VBA.DeleteSheet (connectedUserFormulaire)
+                Call ManageProgressBar("Unset")
+            End If
+        Else
+            MsgBox confirmationMessageDisplayed, Title:="Permission refusée"
+        End If
+        
+    Else
+        MsgBox FW_VBA.RetrieveMessageToDisplay("vba_code_message", "inputValueIncorrect"), Title:="Information"
+    End If
+End Sub
+
+
+
+
+'###########################################
+' Macro associée au bouton "Evaluer ses compétences" de l'onglet {{connectedUser}}_Suivi
+'###########################################
+Sub GenererFormulaire()
+    Dim connectedUserFormulaire As String, connectedUser As String, wb As Workbook, displayedMessage As String, adminTabVisibility As String
+    
+    adminTabVisibility = Worksheets("Template_Form").Visible
+    Set wb = ThisWorkbook
+    connectedUser = Left(wb.ActiveSheet.Name, InStrRev(wb.ActiveSheet.Name, "_") - 1)
+    connectedUserFormulaire = connectedUser & "_Form"
+    confirmationMessageDisplayed = FW_VBA.RetrieveMessageToDisplay("vba_code_message", "permissionDeniedMessage")
+    confirmationMessageDisplayed = Replace(confirmationMessageDisplayed, "{{currentUser}}", connectedUser)
+    If hasPermission(connectedUser) Then
+        'Initialiser l'onglet {{connectedUser}}_Form ou bien activer cet onglet s'il existe déjà
+        If IsSheetFound(connectedUserFormulaire) = True Then
+            Worksheets(connectedUserFormulaire).Visible = xlSheetVisible
+            Sheets(connectedUserFormulaire).Activate
+        Else
+            'Desactiver les alertes pour éviter de voir apparaitre un pop in native inutile
+            Application.DisplayAlerts = False
+            'Copier onglet template
+            Worksheets("Template_Form").Visible = xlSheetVisible
+            Sheets("Template_Form").Copy Before:=Sheets(1)
+            SendKeys "{RIGHT}", True
+            'Renommer l'onglet
+            ActiveSheet.Name = connectedUserFormulaire
+            Range("KAM_acteur").Value = connectedUser
+            Sheets(connectedUserFormulaire).Activate
+            ' Mettre le focus sur une cellule afin d'afficher proprement le formulaire
+            Range("E5").Select
+            ' Stocker la date horodaté de création du formulaire. Sert au stockage du Suivi qui est horodaté
+            Range("date_saisie_horodate").Value = Now()
+        End If
+    Else
+            MsgBox confirmationMessageDisplayed, Title:="Permission refusée"
+    End If
+    
+    'Réactiver les alertes
+    Application.DisplayAlerts = True
+    Worksheets("Template_Form").Visible = adminTabVisibility
+End Sub
+
+
+'###########################################
+' Permet d'afficher/masquer les 3 boutons disponibles sur l'onglet de suivi
+'###########################################
+Sub UpdateButtonVisibility(connectedUser As String)
+    Dim oSheet      As Worksheet, oShape As Shape, currentUser As String, isSupervisorOnly As Boolean, connectedUserSuivi As String
+    currentUser = Range("nom_suivi")
+    connectedUserSuivi = connectedUser & "_Suivi"
+    Set oSheet = ThisWorkbook.ActiveSheet
+    'Remarque : depuis le fichier excel il y a 3 groupes contenant "Forme rectangulaire + Texte bouton + Icone". Ces groupes one été nommés
+    ' "Evaluer" : bouton permettant d'ouvrir un nouveau formulaire de saisie de compétence
+    ' "Ajouter" : bouton permettant d'ajouter des domaines de compétences
+    ' "Prioriser" : bouton permettant de tagguer certaines compétences comme étant prioritaire
+    
+    'Afficher le bouton Prioriser sur une personne que l'on supervise, sinon masquer le bouton
+    'Afficher le bouton Evaluer uniquement pour soi, sinon masquer le bouton
+    
+    If currentUser = connectedUser Then
+        For Each oShape In oSheet.Shapes
+            If oShape.Name = "Prioriser" Then
+                oShape.Visible = msoFalse
+            End If
+            If oShape.Name = "Evaluer" Then
+                oShape.Visible = msoTrue
+            End If
+        Next
+    Else
+        For Each oShape In oSheet.Shapes
+            If oShape.Name = "Prioriser" Then
+                oShape.Visible = msoTrue
+            End If
+            If oShape.Name = "Evaluer" Then
+                oShape.Visible = msoFalse
+            End If
+        Next
+    End If
+    
+    'Masquer le bouton Evaluer si l'utilisateur est présent dans la table user_sans_formulaire
+    onlySupervisorList = Range("user_sans_formulaire")
+    isSupervisorOnly = FW_VBA.IsInArray(connectedUser, onlySupervisorList)
+    
+    If isSupervisorOnly Then
+    Call FW_VBA.UpdateSpecificButtonVisibility("Evaluer", connectedUserSuivi, False)
+    End If
+    
+    'Masquer le bouton Evaluer si l'utilisateur n'a aucune compétence à évaluer
+    If hideSkillEvaluationButton(currentUser) Then
+    Call FW_VBA.UpdateSpecificButtonVisibility("Evaluer", connectedUserSuivi, False)
+    Call FW_VBA.UpdateSpecificButtonVisibility("Prioriser", connectedUserSuivi, False)
+    MsgBox FW_VBA.RetrieveMessageToDisplay("vba_code_message", "emptySkillListMessage"), Title:="Information"
+    End If
+    
+    
+End Sub
+
+
+'###########################################
+'Permet de construire la liste déroulante utilisé dans l'onglet de Suivi
+'###########################################
+Sub SetUserListForSuivi(connectedUser As String, targetName As String, sourcetab As String, indexTab As Integer)
+    Dim currentTab As Variant, startIndex As Integer, i As Integer, defaultUser As String
+    currentTab = Range(sourcetab)
+    
+    'Calcul du startIndex : la liste déroulante commence par son propre nom. Si on est uniquement un superviseur (pas de formulaire à saisie), on doit supprimer le premier élément de la liste.
+    ' Cela revient à commencer le traitement ultérieu avec un startIndex à 2 plutot qu'à 1
+    startIndex = 1
+    onlySupervisorList = Range("user_sans_formulaire")
+    If FW_VBA.IsInArray(connectedUser, onlySupervisorList) Then
+        startIndex = 2
+    End If
+    
+    'Construire la liste déroulante qui permet de suivre son propre avancement et/ou celui des personnes que l'on supervise
+    ' Cas aux limite quand currentTab ne contient qu'un élément - renvoie donc un String
+    If VarType(currentTab) = 8 Then
+        liste_valeur = currentTab
+        'Stocker la valeur du nom à afficher par défaut la première fois dans le cellule contenant la liste déroulante
+        ' Remarque : le cas aux limites où il n'y a qu'un seul élément dans currentTab ET startIndex = 2 est impossible car géré en amont dans le test NeedSuivitab
+        defaultUser = currentTab
+    Else
+        'Construire nominal : on boucle sur la liste des mopés
+        For i = startIndex To UBound(currentTab)
+            liste_valeur = liste_valeur & "," & currentTab(i, indexTab)
+        Next
+        liste_valeur = Right(liste_valeur, Len(liste_valeur) - 1)
+        'Stocker la valeur du nom à afficher par défaut la première fois dans le cellule contenant la liste déroulante
+        defaultUser = currentTab(startIndex, indexTab)
+    End If
+    
+    'Ajouter les valeurs récupérées précédemment en tant que liste déroulante
+    With Range(targetName).Validation
+        .Delete
+        .Add Type:=xlValidateList, AlertStyle:=xlValidAlertStop, Formula1:=liste_valeur
+    End With
+    
+    'Mettre à jour le nom affiché par défaut la première fois dans le cellule contenant la liste déroulante
+    Range("nom_suivi").Value = defaultUser
+    
+End Sub
+
+
+'###########################################
+'Permet de vérifier à partir des données enregistrées si l'on doit initiliser un onglet "{{connectedUser}}_Suivi", renvoie True ou False
+'###########################################
+Function NeedSuivitab(userName As String) As Boolean
+    Dim isMOP       As Boolean, isSupervisorOnly As Boolean, isStandardUserKnown As Boolean, usersGeneralConfiguration() As Variant, indexActeur As Integer
+    
+    NeedSuivitab = True
+    onlySupervisorList = Range("user_sans_formulaire")
+    mopList = Range("unique_liste_mop")
+    
+    ' Vérifier s'il est MOP
+    isMOP = FW_VBA.IsInArray(userName, mopList)
+    
+    'Vérifier s'il n'est qu'un superviseur, donc pas de formulaire d'auto évaluation à prévoir, on le supprime de la liste déroulante du suivi
+    isSupervisorOnly = FW_VBA.IsInArray(userName, onlySupervisorList)
+    
+    'Vérifier s'il est dans le tableau Declaration_generale_utilisateur
+    isStandardUserKnown = False
+    usersGeneralConfiguration = Range("Declaration_generale_utilisateur")
+    indexActeur = FW_VBA.returnedIndexColumnHeader("Declaration_generale_utilisateur", "Acteur")
+    For i = 1 To UBound(usersGeneralConfiguration)
+        If usersGeneralConfiguration(i, indexActeur) = userName Then
+            isStandardUserKnown = True
+        End If
+    Next
+    
+    'Renvoyer False si (1) OU (2)
+    ' (1) : l'utilisateur n'est pas connu dans la table Declaration_generale_utilisateur et n'est pas non plus un MOP. Il n'a donc besoin ni du suivi, ni du formulaire
+    ' (2) : l'utilisateur est dans la table "user_sans_formulaire" (pas besoin de Formulaire) mais n'est pas MOP (pas besoin de suivi)
+    If (isStandardUserKnown = False And isMOP = False) Or (isMOP = False And isSupervisorOnly = True) Then
+        NeedSuivitab = False
+    End If
+    
+End Function
+
+'###########################################
+'Permet de vérifier si l'utilisateur peut accueillir un nouveau collaborateur
+'###########################################
+Function canAddUsers(connectedUser As String) As Boolean
+    Dim indexUserWelcomeRights As Integer, usersGeneralConfiguration As Variant
+    canAddUsers = False
+    usersGeneralConfiguration = Range("Declaration_generale_utilisateur")
+    indexUserWelcomeRights = FW_VBA.returnedIndexColumnHeader("Declaration_generale_utilisateur", "Acceuil collaborateur")
+    
+    For i = 1 To UBound(usersGeneralConfiguration)
+        If usersGeneralConfiguration(i, 1) = connectedUser And usersGeneralConfiguration(i, indexUserWelcomeRights) = "oui" Then
+            canAddUsers = True
+        End If
+    Next
+End Function
+
+
+
+
+
+'TODO ============================================
+'On fait appel à ManageProgressBar() pour faire apparaitre et mettre à jour la barre de défilement
+Sub SauvegarderFormulaireAccueilCollaborateur()
+    Dim saveAndClose As Integer, connectedUserFormulaire As String, connectedUser As String, connectedUserSuivi As String, wb As Workbook, confirmationMessageDisplayed As String, dataCollectedStatus As String, isFinalNameCorrect As Boolean, arraySupervisor As Variant, adminTabVisibility As String, gestionRefTabVisibility As String, historyTabVisibility As String
+    'Désactiver les alertes / mises à jour IHM qui peuvent ralentir la macro
+    Application.ScreenUpdating = False
+    Application.DisplayAlerts = False
+    
+    adminTabVisibility = Worksheets("Admin").Visible
+    gestionRefTabVisibility = Worksheets("GestionRef").Visible
+    historyTabVisibility = Worksheets("Historique_KAM").Visible
+    Set wb = ThisWorkbook
+    connectedUser = FW_VBA.OverridenConnectedUser(Application.userName)
+    connectedUserFormulaire = connectedUser & "_Accueil"
+    connectedUserSuivi = connectedUser & "_Suivi"
+    confirmationMessageDisplayed = FW_VBA.RetrieveMessageToDisplay("vba_code_message", "permissionDeniedMessage")
+    confirmationMessageDisplayed = Replace(confirmationMessageDisplayed, "{{currentUser}}", connectedUser)
+    
+    'Controler les données renseignées par l'utilisateur - la fonction renvoie "OK" si le formulaire est validé
+    dataCollectedStatus = checkCollectedDataForNewUser()
+    If dataCollectedStatus = "OK" Then
+        'Vérifier que c'est bien l'acteur courant qui clique sur le bouton
+        If hasPermission(connectedUser) Then
+            'Afficher la popin avec choix oui/non
+            saveAndClose = MsgBox(FW_VBA.RetrieveMessageToDisplay("vba_code_message", "informationBeforeSavingWelcomedUser"), vbQuestion + vbYesNo + vbDefaultButton2, "Information")
+            'Choix oui -> copier les info du formulaire dans les 2 onglets Admin et GestionRef
+            If saveAndClose = vbYes Then
+                isFinalNameCorrect = True
+                'Si la taille du nom prénom est supérieur à 26
+                If FW_VBA.isStringLengthMaxCorrect(Range("new_actor_name"), 26) = False Then
+                    ' On ouvre le formulaire de surcharge
+                    Call OuvrirUserFormOverridenName
+                    ' On vérifie que l'utilisateur est allez au bout de la surcharge, ce qui veut dire que "surchage_nom" a une valeur et elle est inférieur ou égale à 26 caractères
+                    If Range("surcharge_nom") = "" Then
+                        isFinalNameCorrect = False
+                    End If
+                End If
+                
+                ' Cas nominal : on peut lancer les traitements d'enregistrement du nouveau collaborateur
+                If isFinalNameCorrect Then
+                    Call ManageProgressBar("Set")
+                    Call ManageProgressBar("Update", 0.1)
+                    'Rendre visible l'onglet à mettre à jour
+                    Worksheets("Admin").Visible = xlSheetVisible
+                    'ajout de l'utilisateur dans le tableau Declaration_generale_utilisateur
+                    Call FW_VBA.CopyRangeAndPastInCellRange(connectedUserFormulaire, Range("source_ajout_utilisateur_conf_gen"), "Admin", Range("target_ajout_utilisateur_conf_gen"))
+                    Call ManageProgressBar("Update", 0.2)
+                    
+                    'ajout de l'utilisateur dans le tableau superviseur
+                    Call FW_VBA.CopyRangeAndPastInCellRange(connectedUserFormulaire, Range("source_ajout_utilisateur_superviseur"), "Admin", Range("target_ajout_utilisateur_superviseur"))
+                    Call ManageProgressBar("Update", 0.3)
+                    
+                     
+                     'Rendre visible l'onglet à mettre à jour
+                     Worksheets("GestionRef").Visible = xlSheetVisible
+                    'ajout des compétences de l'utilisateur dnas l'onglet GestionRef, insertion d'une nouvelle ligne pour conserver de l'espace après le tableau
+                    Call FW_VBA.CopyRangeAndPastInCellRange(connectedUserFormulaire, Range("source_ajout_competence"), "GestionRef", Range("target_ajout_competence"))
+                    Call FW_VBA.insertBlankInTargetColumn("GestionRef", Range("insert_column_before_save_competence"))
+                    Call ManageProgressBar("Update", 0.4)
+                    
+                    'Rendre visible l'onglet à mettre à jour
+                    Worksheets("Historique_Priorite").Visible = xlSheetVisible
+                    'ajout des colonnes et maj de la plage de l'historique de Priorité
+                    Call FW_VBA.CopyRangeAndPastInCellRange(connectedUserFormulaire, Range("source_ajout_entete_HIS"), "Historique_Priorite", Range("target_ajout_Historique_Priorite"))
+                    Call ManageProgressBar("Update", 0.5)
+                    Call AdminModule.UpdateHistoryRange("historique_Priorite_entete", "historique_Priorite_tab", Range("target_ajout_Historique_Priorite"), wb)
+                    Call ManageProgressBar("Update", 0.6)
+                    
+                    'Rendre visible l'onglet à mettre à jour
+                    Worksheets("Historique_KAM").Visible = xlSheetVisible
+                    'ajout des colonnes et maj de la plage de l'historique de KAM
+                    Call FW_VBA.CopyRangeAndPastInCellRange(connectedUserFormulaire, Range("source_ajout_entete_HIS"), "Historique_KAM", Range("target_ajout_Historique_KAM"))
+                    Call ManageProgressBar("Update", 0.7)
+                    Call FW_VBA.propagateExcelFormula("Historique_KAM", Range("target_ajout_Historique_KAM"), Range("target_ajout_Historique_KAM_end"))
+                    Call AdminModule.UpdateHistoryRange("historique_KAM_tab", "historique_KAM_entete", Range("target_ajout_Historique_KAM_end"), wb)
+                    Call ManageProgressBar("Update", 0.8)
+                    
+                    'Rendre visible l'onglet à mettre à jour
+                    Worksheets("Historique_Suivi").Visible = xlSheetVisible
+                    'ajout des colonnes et maj de la plage de l'historique de suivi
+                    Call FW_VBA.CopyRangeAndPastInCellRange(connectedUserFormulaire, Range("source_ajout_entete_HIS"), "Historique_Suivi", Range("target_ajout_Historique_Suivi"))
+                    Call FW_VBA.propagateExcelFormula("Historique_Suivi", Range("target_ajout_Historique_Suivi"), Range("target_ajout_Historique_Suivi_end"))
+                    Call AdminModule.UpdateHistoryRange("historique_Suivi_tab", "historique_Suivi_entete", Range("target_ajout_Historique_Suivi_end"), wb)
+                    Call ManageProgressBar("Update", 0.9)
+                    
+                    'Propager la formule utilisé par utilisateur dans la KAM  (liste des utilisateurs mise à jour automatiquement via l'ajout d'un user actif) + maj de la plage de la KAM
+                    Call FW_VBA.propagateExcelFormula("KAM", Range("source_cellule_formule_KAM"), Range("target_cellule_formule_KAM"))
+                    Call AdminModule.UpdateHistoryRange("KAM_body", "KAM_body", Range("target_cellule_formule_KAM"), wb)
+                    Call ManageProgressBar("Update", 1)
+                    
+                    'Mise à jour de la MFC
+                    Call FW_VBA.MofidyApplyToRangeForKAMBodyMFC("KAM_body", Range("mfc_KAM_dyn_range"))
+                    
+                    'Mise à jour de la liste déroulante de l'onglet de suivi si l'utilisateur courant est le mop du nouveau collaborateur
+                    Sheets(connectedUserFormulaire).Activate
+                    arraySupervisor = Range("plage_ajout_utilisateur_superviseur")
+                    If FW_VBA.IsInArray(connectedUser, arraySupervisor) Then
+                        Sheets(connectedUserSuivi).Activate
+                        Call SetUserListForSuivi(connectedUser, "nom_suivi", "liste_mopes", 1)
+                    End If
+                    
+                    Call ManageProgressBar("Update", 0.9)
+                    Sheets("KAM").Activate
+                    'Fermer la barre de progression et le formulaire d'accueil
+                    Call ManageProgressBar("Unset")
+                    FW_VBA.DeleteSheet (connectedUserFormulaire)
+                    
+                Else
+                    'Cas aux limites : nom final non autorisé
+                    MsgBox FW_VBA.RetrieveMessageToDisplay("vba_code_message", "overridenNameFormCancelledMessage"), Title:="Information"
+                End If
+            End If
+        Else
+            MsgBox confirmationMessageDisplayed, Title:="Permission refusée"
+        End If
+    End If
+    
+    'Afficher les onglets en fonction des droits de l'utilisateur connecté
+    Worksheets("Admin").Visible = adminTabVisibility
+    Worksheets("GestionRef").Visible = gestionRefTabVisibility
+    Worksheets("Historique_Priorite").Visible = historyTabVisibility
+    Worksheets("Historique_KAM").Visible = historyTabVisibility
+    Worksheets("Historique_Suivi").Visible = historyTabVisibility
+    'Réactiver les mises à jour IHM
+    Application.ScreenUpdating = True
+    Application.DisplayAlerts = True
+End Sub
+
+
+
+'###########################################
+'Controle le formulaire d'accueil d'un collaborateur. Renvoie "OK" ou le message d'erreur
+'###########################################
+Function checkCollectedDataForNewUser() As String
+    Dim dataCollected As Variant, nbSkills As Integer
+    dataCollected = Range("plage_ajout_utilisateur_conf_gen")
+    nbSkills = Range("nb_competences_ajoutes")
+
+    'On renvoie OK par défaut si aucune erreur rencontrée plus loin
+    checkCollectedDataForNewUser = "OK"
+    
+    'Vérifier que le nom/prenom est renseigné
+    If dataCollected(1, 1) = 0 Then
+        checkCollectedDataForNewUser = FW_VBA.RetrieveMessageToDisplay("vba_code_message", "errorFieldNameNewUserMessage")
+        MsgBox checkCollectedDataForNewUser, Title:="Information"
+    End If
+    
+    'Vérifier que l'email a un bon format
+    If IsValidEmail(CStr(dataCollected(1, 3))) = False Then
+        checkCollectedDataForNewUser = FW_VBA.RetrieveMessageToDisplay("vba_code_message", "errorFieldEMailMessage")
+        MsgBox checkCollectedDataForNewUser, Title:="Information"
+    End If
+    
+    'Vérifier qu'il y a au moins 1 compétence de saisie
+    If nbSkills = 0 Then
+        checkCollectedDataForNewUser = FW_VBA.RetrieveMessageToDisplay("vba_code_message", "errorFieldSkillsMessage")
+        MsgBox checkCollectedDataForNewUser, Title:="Information"
+    End If
+    
+    'Vérifier que le nom/prénom n'existe pas déjà
+    If FW_VBA.isDuplicateValueInTable("Declaration_generale_utilisateur", CStr(dataCollected(1, 1))) Then
+        checkCollectedDataForNewUser = FW_VBA.RetrieveMessageToDisplay("vba_code_message", "errorDuplicateUserMessage")
+        MsgBox checkCollectedDataForNewUser, Title:="Information"
+    End If
+    
+End Function
+
+
+
+'###########################################
+' Permet d'ajouter dans le tableau des surcharges de nom (onglet Admin) le nom long (utilisé par microsoft) et le nom court (utilisé dans cet outil)
+' Permet de contourner la limitation du nombre de caractères sur le nommage des onglets
+'###########################################
+Sub addOverridenNameConfiguration(connectedUserFormulaire As String)
+    Dim sourceRange As String, targetRange As String
+    sourceRange = Range("source_surcharge_nom")
+    targetRange = Range("target_surcharge_nom")
+    Sheets(connectedUserFormulaire).Activate
+    Call FW_VBA.CopyRangeAndPastInCellRange(connectedUserFormulaire, sourceRange, "Admin", targetRange)
+End Sub
+
+
+
+
+'###########################################
+' Permet d'encapsuler du code répétitif pour mettre à jour les plages des 3 historiques à l'ajout d'un utilisateur
+'###########################################
+Sub UpdateHistoryRange(rangeName1 As String, rangeName2 As String, lastTargetCell As String, wb As Workbook)
+    Dim newWidthColumnEnd As String
+    newWidthColumnEnd = Mid(lastTargetCell, 1, Len(lastTargetCell) - 1)
+    Call FW_VBA.UpdateWidthAdressRange(rangeName1, newWidthColumnEnd, wb)
+    Call FW_VBA.UpdateWidthAdressRange(rangeName2, newWidthColumnEnd, wb)
+End Sub
+
+
+'###########################################
+' Macro pour MAJ la MFC de la KAM
+'###########################################
+Sub MacroMFCKAM()
+Call FW_VBA.MofidyApplyToRangeForKAMBodyMFC("KAM_body", Range("mfc_KAM_dyn_range"))
+End Sub
+
+'###########################################
+' Permet de vérifier s'il y a au moins 1 compétence évaluable
+'###########################################
+Function hideSkillEvaluationButton(connectedUser As String) As Boolean
+hideSkillEvaluationButton = Range("cacher_bouton_formulaire")
+End Function
+
+'###########################
+'Surcouche qui permet de centraliser la désactivation de la progressBar
+'###########################
+Sub ManageProgressBar(actionType As String, Optional progressValue As Single)
+    Dim isProgressBarActive As Boolean
+    isProgressBarActive = False
+    
+    If isProgressBarActive Then
+        
+        If actionType = "Set" Then
+            Call SetProgressBar(1)
+        ElseIf actionType = "Unset" Then
+            Call UnsetProgressBar(True)
+        Else
+            Call UpdateProgressBar(progressValue)
+            
+        End If
+    Else
+        If actionType = "Set" Then
+            Application.Cursor = xlWait
+        ElseIf actionType = "Unset" Then
+            Application.Cursor = xlDefault
+        End If
+     End If
+End Sub
+
+
+Sub SaveUserMicrosoftAtFirstConnection(connectedUser As String)
+    Dim indexActeur As String, indexUserMicrosoft As String, i As Integer, usersGeneralConfiguration As Variant, isFirstConnexion As Boolean, wb As Workbook
+    Set wb = ThisWorkbook
+    usersGeneralConfiguration = Range("Declaration_generale_utilisateur")
+    indexActeur = FW_VBA.returnedIndexColumnHeader("Declaration_generale_utilisateur", "Acteur")
+    indexUserMicrosoft = FW_VBA.returnedIndexColumnHeader("Declaration_generale_utilisateur", "User Microsoft")
+    isFirstConnexion = False
+    
+    ' Chercher l'utilisateur et récupérer la date de dernière connexion
+    For i = 1 To UBound(usersGeneralConfiguration)
+        If usersGeneralConfiguration(i, indexActeur) = connectedUser Then
+            If usersGeneralConfiguration(i, indexUserMicrosoft) = "" Then
+                isFirstConnexion = True
+            End If
+        End If
+    Next
+    
+    If isFirstConnexion Then
+        ' Mettre à jour la date de dernière connexion dans le tableau Declaration_generale_utilisateur avec la date actuelle
+        For i = 1 To UBound(usersGeneralConfiguration)
+            If usersGeneralConfiguration(i, indexActeur) = connectedUser Then
+            test = wb.Names.Item("Admin!vba_entete_date_derniere_co").RefersToLocal
+           test2 = wb.Names.Item("vba_entete_user_microsoft").RefersToLocal
+                Range(Left(wb.Names.Item("vba_entete_user_microsoft").RefersToLocal, InStrRev(wb.Names.Item("vba_entete_user_microsoft").RefersToLocal, "$")) & i + 1) = Environ("Username")
+            End If
+        Next
+    End If
+End Sub
+
+
+
+
+
+Sub GenererRadar()
+Dim strDate1 As String, strDate2 As String, titre As String, enableGraphGeneration As Boolean
+strDate1 = Range("graph_date1")
+strDate2 = Range("graph_date2")
+strDate3 = Range("graph_date3")
+displayDate3 = Range("utiliser_graphe_date_3")
+titre = "Evolution de " & Range("nom_suivi")
+enableGraphGeneration = Range("enable_graph")
+
+If displayDate3 = False Then
+    If strDate1 = strDate2 Then
+        strDate2 = strDate3
+    End If
+End If
+    
+    
+    
+    
+    
+        
+
+
+
+
+If enableGraphGeneration Then
+
+'
+    'Range("DF10:DH12").Select
+    Range("graph_liste_competence").Select
+    ActiveSheet.Shapes.AddChart2(317, xlRadar).Select
+    'ActiveChart.SetSourceData Source:=Range("Template_Suivi!$DF$10:$DH$12")
+    ActiveChart.SetSourceData Source:=Range("graph_liste_competence")
+    ActiveChart.Legend.Select
+    ActiveChart.ChartGroups(1).RadarAxisLabels.Select
+    Application.CutCopyMode = False
+    'ActiveChart.FullSeriesCollection(1).Name = "=""22/01/2025"""
+        ActiveChart.FullSeriesCollection(1).Name = strDate1
+    ActiveChart.FullSeriesCollection(2).Name = strDate2
+    If displayDate3 Then
+        ActiveChart.FullSeriesCollection(3).Name = strDate3
+    End If
+    
+    ActiveChart.ChartTitle.Select
+    ActiveChart.ChartTitle.Text = titre
+    ActiveChart.Axes(xlValue).MaximumScale = 5
+
+
+    
+Else
+ MsgBox FW_VBA.RetrieveMessageToDisplay("vba_code_message", "errorGraphGeneration"), Title:="Information"
+
+End If
+End Sub
+
+
+
+Sub GenererHistogramme()
+Dim strDate1 As String, strDate2 As String, titre As String, enableGraphGeneration As Boolean
+strDate1 = Range("graph_date1")
+strDate2 = Range("graph_date2")
+strDate3 = Range("graph_date3")
+displayDate3 = Range("utiliser_graphe_date_3")
+titre = "Evolution de " & Range("nom_suivi")
+enableGraphGeneration = Range("enable_graph")
+
+If displayDate3 = False Then
+    If strDate1 = strDate2 Then
+        strDate2 = strDate3
+    End If
+End If
+
+If enableGraphGeneration Then
+
+
+    Range("graph_liste_competence").Select
+    ActiveSheet.Shapes.AddChart2(201, xlColumnClustered).Select
+    ActiveChart.SetSourceData Source:=Range("graph_liste_competence")
+    ActiveChart.Legend.Select
+    Application.CutCopyMode = False
+    ActiveChart.FullSeriesCollection(1).Name = strDate1
+    ActiveChart.FullSeriesCollection(2).Name = strDate2
+        If displayDate3 Then
+            ActiveChart.FullSeriesCollection(3).Name = strDate3
+        End If
+    ActiveChart.ChartTitle.Select
+    ActiveChart.ChartTitle.Text = titre
+    Selection.Format.TextFrame2.TextRange.Characters.Text = titre
+    With Selection.Format.TextFrame2.TextRange.Characters(1, 5).ParagraphFormat
+        .TextDirection = msoTextDirectionLeftToRight
+        .Alignment = msoAlignCenter
+    End With
+    With Selection.Format.TextFrame2.TextRange.Characters(1, 5).Font
+        .BaselineOffset = 0
+        .Bold = msoFalse
+        .NameComplexScript = "+mn-cs"
+        .NameFarEast = "+mn-ea"
+        .Fill.Visible = msoTrue
+        .Fill.ForeColor.RGB = RGB(89, 89, 89)
+        .Fill.Transparency = 0
+        .Fill.Solid
+        .Size = 14
+        .Italic = msoFalse
+        .Kerning = 12
+        .Name = "+mn-lt"
+        .UnderlineStyle = msoNoUnderline
+        .Spacing = 0
+        .Strike = msoNoStrike
+    End With
+Else
+ MsgBox FW_VBA.RetrieveMessageToDisplay("vba_code_message", "errorGraphGeneration"), Title:="Information"
+
+End If
+    
+End Sub
+
+
+Sub GoToGraph()
+Dim connectedUser As String, connectedUserSuivi As String, cleanRange As String
+connectedUser = FW_VBA.OverridenConnectedUser(Application.userName)
+connectedUserSuivi = connectedUser & "_Suivi"
+Application.ScreenUpdating = False
+
+'MsgBox connectedUserFormulaire
+    cleanRange = Range("range_graph_clean")
+    Range(cleanRange).Select
+    Selection.Clear
+    cleanRange = Range("range_init_graph_case_a_cocher")
+    Range(cleanRange) = False
+Call FW_VBA.propagateExcelFormula(connectedUserSuivi, Range("range_init_graph_case_a_cocher"), Range("range_final_graph_case_a_cocher"))
+Application.ScreenUpdating = True
+Range("CV9").Select
+End Sub
+
+
+Sub GoToSuivi()
+Range("nom_suivi").Select
+End Sub
+
+Sub LockFichierFromAdmin()
+Call FW_VBA.AjouterMotDePasse
+End Sub
+
+Sub UnlockFichierFromAdmin()
+Call FW_VBA.SupprimerMotDePasse
+End Sub
+
+Sub UpdateLastUpdateModificationDate(connectedUser As String)
+    Dim usersGeneralConfiguration As Variant, wb As Workbook, indexActeur As Integer
+    Set wb = ThisWorkbook
+    Worksheets("Admin").Visible = xlSheetVisible
+    Sheets("Admin").Activate
+    
+    usersGeneralConfiguration = Range("Declaration_generale_utilisateur")
+    indexActeur = FW_VBA.returnedIndexColumnHeader("Declaration_generale_utilisateur", "Acteur")
+
+    
+    ' Mettre à jour la date de dernière connexion dans le tableau Declaration_generale_utilisateur avec la date actuelle
+    For i = 1 To UBound(usersGeneralConfiguration)
+        If usersGeneralConfiguration(i, indexActeur) = connectedUser Then
+            Range(Left(wb.Names.Item("Admin!vba_entete_date_derniere_co").RefersToLocal, InStrRev(wb.Names.Item("Admin!vba_entete_date_derniere_co").RefersToLocal, "$")) & i + 1) = Date
+        End If
+    Next
+    
+End Sub
+
+Sub InitSuiviIfMissing(connectedUser As String, connectedUserSuivi As String)
+Application.ScreenUpdating = False
+    If FW_VBA.IsSheetFound(connectedUserSuivi) = False Then
+        If AdminModule.NeedSuivitab(connectedUser) Then
+            Call AdminModule.InitSuivi(connectedUser)
+            'Call UpdateLastUpdateModificationDate(connectedUser)
+        End If
+    End If
+Sheets("Aide").Activate
+Application.ScreenUpdating = True
+End Sub
+
+
+Sub GoToAdminMode()
+    Dim tab_droit() As Variant, k As Integer, userFound As Boolean, currentRight As String, indexActeur As Integer, indexDroits As Integer, connectedUser As String
+    tab_droit = Range("Declaration_generale_utilisateur")
+    indexActeur = FW_VBA.returnedIndexColumnHeader("Declaration_generale_utilisateur", "Acteur")
+    indexDroits = FW_VBA.returnedIndexColumnHeader("Declaration_generale_utilisateur", "Droits")
+    userFound = False
+    connectedUser = FW_VBA.OverridenConnectedUser(Application.userName)
+
+    
+    Worksheets("Referentiel").Visible = xlSheetVisible
+    Worksheets("KAM").Visible = xlSheetVisible
+    
+    ' On parcourt le tableau Declaration_generale_utilisateur de l'onglet Admin pour aller vérifier la colonne Droits (Admin, Contributeur ou Collaborateur)
+    For k = 1 To UBound(tab_droit)
+        If tab_droit(k, indexActeur) = connectedUser Then
+            userFound = True
+            currentRight = tab_droit(k, indexDroits)
+            'currentRight = "Admin"
+            ' Cas Admin
+            If currentRight = "Admin" Or currentRight = "Contributeur" Then
+                    Call UpdateUserConnectedRights(connectedUser)
+            Else
+                MsgBox "Vous n'avez pas les droits admin"
+            End If
+        End If
+    Next
+End Sub
+
+
+Sub RefreshStandardTabVisibility()
+    Dim connectedUser As String
+    connectedUser = FW_VBA.OverridenConnectedUser(Application.userName)
+    Call UpdateUserConnectedRights(connectedUser, "defaultMode")
+End Sub
+
+
