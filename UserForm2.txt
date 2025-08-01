@@ -1,0 +1,206 @@
+Private Sub Frame2_Click()
+
+End Sub
+
+Private Sub TextBox1_Change()
+
+End Sub
+
+'###########################################
+' Initialiser la pop in de priorisation de compétence.
+' Traitement pour pré sélectionner les compétences déjà prioritaires de l'utilisateur courant
+'###########################################
+Private Sub UserForm_Initialize()
+    Dim rg          As Range, areSkillsPreSelected As Boolean
+    Set rg = Range("liste_competences_a_prioriser")
+    areSkillsPreSelected = Range("preselection_priorite")
+    
+    'Fixer la taille du userForm
+    With Me
+        .Height = 470
+        .Width = 675
+        .BackColor = RGB(217, 217, 217)
+        .BorderStyle = fmBorderStyleSingle
+        .BorderColor = RGB(150, 150, 150)
+        .Caption = FW_VBA.RetrieveMessageToDisplay("vba_code_message", "userformPrioritizeSkillsTitle")
+        .Top = Application.Top + (Application.Height - Me.Height) / 2
+        .Left = Application.Left + (Application.Width - Me.Width) / 2
+    End With
+    
+    
+    
+    'Fixer la taille de la Frame1
+    'Frame ajoutée pour contourner un bug: parfois (sans raison apparente) les boutons n'apparaissent pas.
+    With Frame1
+        .Height = 365
+        .Width = 650
+        .BackColor = RGB(217, 217, 217)
+    End With
+    
+    'Fixer la taille de la listBox
+    With ListBox1
+        'Initialiser la listBox avec l'ensemble des compétences de l'utilisateur courant
+        .RowSource = rg.Address
+        '.ColumnHeads = True
+        .Width = 600
+        .Height = 330
+        .ColumnWidths = "1pt;150pt;400pt"
+    End With
+    
+    'Fixer la taille du label
+    With Label1
+        .Width = 600
+        .Height = 20
+        .BackColor = RGB(217, 217, 217)
+        .Caption = FW_VBA.RetrieveMessageToDisplay("vba_code_message", "userformPrioritizeSkillsMessage")
+    End With
+    
+    
+    With CommandButton1
+    .Font.Bold = True
+    .Font.Size = 10
+    .ForeColor = RGB(250, 250, 250)
+    .BackColor = RGB(112, 173, 71)
+    .Width = 114
+    .Height = 30
+    End With
+
+
+     With CommandButton2
+    .Font.Bold = True
+    .Font.Size = 10
+    .ForeColor = RGB(250, 250, 250)
+    .Width = 114
+    .Height = 30
+    .BackColor = RGB(192, 0, 0)
+    End With
+    
+    'Désélectionner tous les éléments de la listBox
+    Dim k As Integer
+        For k = 0 To Me.ListBox1.ListCount
+        Me.ListBox1.Selected(k) = False
+    Next k
+    
+'Tempo ajouter car parfois j'observe un bug (compétence pré sélectionnées à tort
+Application.Wait (Now + TimeValue("0:00:01"))
+
+    'Cas nominal : l'utilisateur possède des compétences déjà prioriser, il faut les retrouver pour les pré sélectionner
+    If areSkillsPreSelected Then
+        Dim j As Integer, i As Integer, prioritizedSkillValue As String, prioritizedSkillsList As Variant, previousPrioritizedSkillsList As String
+        j = 0
+        i = 1
+        'Cas aux limites : une seule compétence présente dans la range. Excel renvoi un nombre (ici de type double) au lieu d'un Variant
+        If VarType(Range("index_competence_prioritaire_preselection")) = 5 Then
+            prioritizedSkillValue = Range("index_competence_prioritaire_preselection")
+            'Pré sélectionner l'unique compétence dans la listBox
+            For j = 0 To Me.ListBox1.ListCount - 1
+                If prioritizedSkillValue = j Then
+                    Me.ListBox1.Selected(j) = True
+                End If
+            Next
+        Else
+            'Cas nominal : plusieurs compétences déjà priorisés
+            prioritizedSkillsList = Range("index_competence_prioritaire_preselection")
+            'Boucler sur la liste des compétences à pré sélectionner dans la listBox
+            For j = 0 To Me.ListBox1.ListCount - 1
+                For i = 1 To UBound(prioritizedSkillsList)
+                    If prioritizedSkillsList(i, 1) = j Then
+                        Me.ListBox1.Selected(j) = True
+                    End If
+                Next
+            Next
+            ' Afficher message
+            ' Remarque : très étrange, sans ce MsgBox, ce n'est pas les bonnes compétences qui sont pré sélectionnées !
+            'MsgBox FW_VBA.RetrieveMessageToDisplay("vba_code_message", "informationPreviousPrioritizedSkillsArePreSelectedMessage"), Title:="Information"
+        End If
+      'Cas au limite : aucune activité priorisé en cours, ne rien faire
+    End If
+'MsgBox FW_VBA.RetrieveMessageToDisplay("vba_code_message", "informationPreviousPrioritizedSkillsArePreSelectedMessage"), Title:="Information"
+End Sub
+
+
+'###########################################
+' Action associée au bouton Sauvegarder
+'###########################################
+Private Sub CommandButton1_Click()
+    Dim wb          As Workbook, indexSkillsSelected As Collection, mappingIndexIdSkillsInListBox As Variant, connectedUserFormulaire As String, connectedUser As String, historyTargetRange As String, currentUser As String, adminTabVisibility As String
+    Set wb = ThisWorkbook
+    connectedUserFormulaire = wb.ActiveSheet.Name
+    connectedUser = Left(connectedUserFormulaire, InStrRev(connectedUserFormulaire, "_") - 1)
+    currentUser = Range("nom_suivi")
+    adminTabVisibility = Worksheets("Historique_Priorite").Visible
+    
+    ' Désactiver les mises à jour IHM
+    Application.ScreenUpdating = False
+    'Récupérer les index des compétences sélectionnées
+    Set indexSkillsSelected = FW_VBA.GetSelectedRows(Me.ListBox1)
+    'Déduire mes id des compétences sélectionnées
+    mappingIndexIdSkillsInListBox = Range("liste_competences_a_prioriser")
+    Set listIdCompetence = extractCompetenceIdArrayFromListBox(indexSkillsSelected, mappingIndexIdSkillsInListBox)
+    
+    'Nettoyer l'historique actuel des priorités de l'acteur courant
+    historyTargetRange = Range("equiv_acteur_Priorite")        'Numéro de colonne de l'utilisateur courant dans l'onglet Historique_Priorite. Exemple : C
+    Worksheets("Historique_Priorite").Visible = xlSheetVisible
+    Sheets("Historique_Priorite").Activate
+    'Clean
+    Columns(historyTargetRange & ":" & historyTargetRange).Select
+    Selection.ClearContents
+    'Remettre le nom/prenom en cellule 1 de la colonne historyTargetRange
+    Range(historyTargetRange & "1") = currentUser
+    
+    'Cas aux limites quand on désélectionne toutes les compétences
+    If listIdCompetence.Count = 0 Then
+        MsgBox FW_VBA.RetrieveMessageToDisplay("vba_code_message", "emptyPrioritizedSkillsListMessage"), Title:="Information"
+    Else
+        'Cas nominal : on va reconstruire l'historique de l'utilisateur en prenant compte des compétences acutellement sélectionnées
+        Dim i       As Integer
+        
+        'Alimenter cellule après cellule la bonne colonne avec les id des compétences priorisées
+        For i = 1 To listIdCompetence.Count
+            Range(historyTargetRange & (i + 1)) = listIdCompetence(i)
+        Next
+        'Mettre à jour  max_taille_historique_Priorite avec la listIdCompetence.Count si la taille est dépassée
+        'Perfectible car si on diminue la colonne effectivement la plus longue, on ne met pas pour autant la plage à jour
+        If (listIdCompetence.Count + 1) > Range("Admin!max_taille_historique_Priorite").Value Then
+            Range("Admin!max_taille_historique_Priorite").Value = (listIdCompetence.Count + 1)
+            Call FW_VBA.UpdateHeightAdressRange("Historique_Priorite_tab", listIdCompetence.Count + 1, wb)
+        End If
+        
+
+End If
+        Application.ScreenUpdating = True
+        'Fermer le userForm
+        Unload Me
+                Sheets(connectedUserFormulaire).Activate
+        'Réactiver les mises à jour IHM
+
+
+        'Afficher les onglets en fonction des droits de l'utilisateur connecté
+        Worksheets("Historique_Priorite").Visible = adminTabVisibility
+    End Sub
+
+
+
+'###########################################
+' Action associée au bouton Quitter
+'###########################################
+Private Sub CommandButton2_Click()
+    Unload Me
+End Sub
+
+
+
+'TO TO
+Function extractCompetenceIdArrayFromListBox(listBoxCol As Collection, arr As Variant) As Collection
+    Dim i           As Integer, j As Integer, coll As New Collection
+    For i = 1 To listBoxCol.Count
+        For j = 1 To UBound(arr)
+            If CInt(listBoxCol.Item(i)) = CInt(arr(j, 5)) Then
+                coll.Add CInt(arr(j, 1))
+            End If
+        Next
+    Next
+    
+    Set extractCompetenceIdArrayFromListBox = coll
+End Function
+

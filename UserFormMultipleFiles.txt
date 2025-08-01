@@ -1,0 +1,27 @@
+Private Sub UserForm_Initialize()
+ 'Fixer la taille du userForm
+    With Me
+        .Height = 100
+        .Width = 650
+        .BackColor = RGB(217, 217, 217)
+        .BorderStyle = fmBorderStyleSingle
+        .BorderColor = RGB(150, 150, 150)
+        .Caption = "Information"
+    End With
+
+    Me.StartUpPosition = 0
+    
+    Me.Top = Application.Top + (Application.Height - Me.Height) / 2
+    Me.Left = Application.Left + (Application.Width - Me.Width) / 2
+
+    'Fixer la taille du textBox
+    With Label1
+        .Width = 620
+        .Height = 30
+        .BackColor = RGB(217, 217, 217)
+        .Caption = FW_VBA.RetrieveMessageToDisplay("vba_code_message", "informationOtherFileOpened")
+
+    End With
+End Sub
+
+
